@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH01: The Boot Process with Systemd - Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .progress-section {
+            margin-bottom: 30px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .quiz-section {
+            display: none;
+        }
+
+        .quiz-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option input[type="radio"],
+        .option input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option.correct {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .option.incorrect {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+
+        .explanation {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+            display: none;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .explanation.show {
+            display: block;
+        }
+
+        .explanation strong {
+            color: #333;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .results-section {
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 48px;
+            color: #667eea;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .score-percentage {
+            font-size: 24px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .results-summary {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            color: #666;
+        }
+
+        .summary-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .start-section {
+            text-align: center;
+        }
+
+        .start-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .start-section p {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .quiz-info {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .quiz-info strong {
+            color: #667eea;
+        }
+
+        .question-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .question-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .question-item:hover {
+            border-left-color: #667eea;
+            background: #f5f5f5;
+        }
+
+        .question-item.answered {
+            border-left-color: #4caf50;
+        }
+
+        .question-item.unanswered {
+            border-left-color: #f44336;
+        }
+
+        .question-item.current {
+            background: #f0f4ff;
+            border-left-color: #667eea;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .btn-nav {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-nav:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-nav:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .answer-status {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-correct {
+            color: #4caf50;
+        }
+
+        .status-incorrect {
+            color: #f44336;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .question-text {
+                font-size: 16px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .score-display {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Start Section -->
+        <div id="startSection" class="start-section">
+            <div class="header">
+                <h1>📚 CH01: The Boot Process with Systemd</h1>
+                <p>Comprehensive Quiz Assessment</p>
+            </div>
+
+            <h2>Welcome to the Quiz!</h2>
+            <p>Test your knowledge about systemd, units, services, targets, and boot management.</p>
+            
+            <div class="quiz-info">
+                <strong>📝 Quiz Details:</strong><br>
+                • Total Questions: <strong>50</strong><br>
+                • Multiple Choice: <strong>30</strong><br>
+                • True/False: <strong>20</strong><br>
+                • Time Limit: <strong>No limit</strong><br>
+                • Instant Feedback: <strong>Yes</strong>
+            </div>
+
+            <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                After selecting an answer, the correct answer will be highlighted in green and incorrect answers in red. 
+                You can review your answers at the end and see a detailed summary.
+            </p>
+
+            <button class="btn-primary" onclick="startQuiz()" style="margin-top: 20px; width: 200px; margin-left: auto; margin-right: auto; display: block;">
+                Start Quiz →
+            </button>
+        </div>
+
+        <!-- Quiz Section -->
+        <div id="quizSection" class="quiz-section">
+            <div class="header">
+                <h1>📚 CH01: The Boot Process with Systemd</h1>
+                <p id="quizTitle"></p>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-info">
+                    <span id="questionCounter">Question 1 of 50</span>
+                    <span id="answeredCounter">Answered: 0/50</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div id="questionContainer">
+                <div class="question-number" id="questionNumber"></div>
+                <div class="question-text" id="questionText"></div>
+                <div class="options" id="optionsContainer"></div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn-nav" id="prevBtn" onclick="previousQuestion()" disabled>← Previous</button>
+                <button class="btn-nav" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+
+            <div class="buttons" style="margin-top: 30px;">
+                <button class="btn-secondary" onclick="showQuestionList()">📋 Questions</button>
+                <button class="btn-primary" onclick="finishQuiz()">Finish Quiz</button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="results-section">
+            <div class="header">
+                <h1>✅ Quiz Completed!</h1>
+                <p>Here's your performance summary</p>
+            </div>
+
+            <div class="score-display" id="scoreDisplay">0/50</div>
+            <div class="score-percentage" id="scorePercentage">0%</div>
+
+            <div class="results-summary">
+                <div class="summary-item">
+                    <span class="summary-label">Total Questions</span>
+                    <span class="summary-value">50</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Correct Answers</span>
+                    <span class="summary-value" id="correctCount">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Incorrect Answers</span>
+                    <span class="summary-value" id="incorrectCount">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Unanswered</span>
+                    <span class="summary-value" id="unansweredCount">50</span>
+                </div>
+            </div>
+
+            <div id="detailedResults"></div>
+
+            <button class="btn-primary" onclick="restartQuiz()" style="margin-top: 20px; width: 200px; margin-left: auto; margin-right: auto; display: block;">
+                Retake Quiz
+            </button>
+        </div>
+
+        <!-- Question List Modal -->
+        <div id="questionListModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; max-height: 600px; overflow-y: auto; width: 90%;">
+                <h2 style="margin-bottom: 20px; color: #333;">Questions Overview</h2>
+                <div id="questionListContent"></div>
+                <button class="btn-secondary" onclick="closeQuestionList()" style="width: 100%; margin-top: 20px;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = {
+            "title": "CH01: The Boot Process with Systemd - Comprehensive Quiz",
+            "description": "Complete assessment covering systemd, units, services, targets, and boot management (excluding Linux Boot Process section)",
+            "mcq_questions": [
+                {"id": 1, "type": "mcq", "question": "What is systemd?", "options": ["A new service in Red Hat Enterprise Linux 7 responsible for starting all kinds of things", "A traditional init system used in older Linux versions", "A file system management tool", "A network configuration utility"], "correct": 0, "explanation": "Systemd is the new service in RHEL 7 that is responsible for starting all kinds of things and provides a uniform interface to start units."},
+                {"id": 2, "type": "mcq", "question": "What PID does systemd run as?", "options": ["PID 0", "PID 1", "PID 2", "PID 10"], "correct": 1, "explanation": "Systemd runs as PID 1 and starts the rest of the system as an alternative to the traditional sysVinit."},
+                {"id": 3, "type": "mcq", "question": "Where are system unit files located?", "options": ["/etc/systemd/system", "/usr/lib/systemd/system", "/run/systemd/system", "/var/lib/systemd/system"], "correct": 1, "explanation": "System unit files are distributed with installed packages and located in the /usr/lib/systemd/system directory."},
+                {"id": 4, "type": "mcq", "question": "Where are user unit files stored?", "options": ["/usr/lib/systemd/system", "/run/systemd/system", "/etc/systemd/user", "/home/user/.systemd"], "correct": 2, "explanation": "User unit files are generated by users and stored in the /etc/systemd/user directory."},
+                {"id": 5, "type": "mcq", "question": "What is the naming convention for unit files?", "options": ["unitname-type", "type.unitname", "unitname.type", "type-unitname"], "correct": 2, "explanation": "Units have a name and a type, encoded in files with names in the form unitname.type (e.g., sshd.service, tmp.mount)."},
+                {"id": 6, "type": "mcq", "question": "Which unit file priority is highest?", "options": ["System unit files", "User unit files", "Runtime unit files", "All have equal priority"], "correct": 1, "explanation": "User unit files take priority over runtime files, and runtime files take precedence over system unit files."},
+                {"id": 7, "type": "mcq", "question": "What does the 'Loaded' state mean for a unit?", "options": ["The unit is currently running", "The unit file has been processed and the unit is active", "The unit is waiting for an event", "The unit has successfully completed"], "correct": 1, "explanation": "Loaded state means the unit file has been processed and the unit is active."},
+                {"id": 8, "type": "mcq", "question": "What does 'Active(running)' state indicate?", "options": ["The unit is waiting for an event", "The unit has completed successfully", "Running with one or more active processes", "The unit is disabled"], "correct": 2, "explanation": "Active(running) state means the unit is running with one or more active processes."},
+                {"id": 9, "type": "mcq", "question": "What does the 'Enabled' state mean?", "options": ["The unit is currently running", "Will be started at boot time", "The unit is disabled", "The unit is waiting for dependencies"], "correct": 1, "explanation": "Enabled state means the unit will be started at boot time."},
+                {"id": 10, "type": "mcq", "question": "What does the 'Static' unit state mean?", "options": ["The unit cannot be started", "The unit can only be started manually", "This unit cannot be enabled but may be started by another unit automatically", "The unit is permanently disabled"], "correct": 2, "explanation": "Static state means this unit cannot be enabled but may be started by another unit automatically."},
+                {"id": 11, "type": "mcq", "question": "What are systemd units used for?", "options": ["Only for managing services", "Organizing boot and maintenance tasks such as hardware initialization, socket creation, file system mounts, and service startups", "Managing user accounts", "Configuring network interfaces"], "correct": 1, "explanation": "Systemd units are objects used for organizing boot and maintenance tasks including hardware initialization, socket creation, file system mounts, and service startups."},
+                {"id": 12, "type": "mcq", "question": "What sections are common to all unit files?", "options": ["[Service] and [Socket]", "[Unit] and [Install]", "[Mount] and [Target]", "[System] and [User]"], "correct": 1, "explanation": "Common elements fall under the [Unit] and [Install] sections and comprise description, documentation location, dependency information, and conflict information."},
+                {"id": 13, "type": "mcq", "question": "What do services typically provide?", "options": ["File system mounting", "Processes that provide specific functionality and allow connections from external clients", "System boot targets", "User account management"], "correct": 1, "explanation": "Services are processes that provide specific functionality and allow connections from external clients (e.g., httpd.service, vsftpd.service)."},
+                {"id": 14, "type": "mcq", "question": "What does the 'ExecStart' line in a service file indicate?", "options": ["How to stop the service", "How to start the unit", "When the service should start", "Dependencies for the service"], "correct": 1, "explanation": "ExecStart line indicates how to start the unit."},
+                {"id": 15, "type": "mcq", "question": "What is the purpose of mount units?", "options": ["To manage services", "To mount the file system", "To define system targets", "To manage user permissions"], "correct": 1, "explanation": "Mount units are used to mount the file system (e.g., boot.mount, home.mount, tmp.mount)."},
+                {"id": 16, "type": "mcq", "question": "What does the 'Conflicts' statement in a mount unit mean?", "options": ["Units that should start together", "Units that must start before this unit", "Units that cannot be used together with this unit (mutually exclusive)", "Units that depend on this unit"], "correct": 2, "explanation": "Conflicts statement is used to define mutually exclusive units that cannot be used together."},
+                {"id": 17, "type": "mcq", "question": "What are targets in systemd?", "options": ["Services that run on the system", "Special systemd unit types needed to load other units in the right order and at the right moment", "File system mount points", "User configuration files"], "correct": 1, "explanation": "Targets are a special systemd unit type and are needed to load other units in the right order and at the right moment."},
+                {"id": 18, "type": "mcq", "question": "Which target is equivalent to runlevel 0?", "options": ["rescue", "multi-user", "halt (poweroff or shutdown)", "graphical"], "correct": 2, "explanation": "The halt, poweroff, or runlevel0 target is equivalent to shutdown."},
+                {"id": 19, "type": "mcq", "question": "Which target is equivalent to runlevel 5?", "options": ["rescue", "multi-user", "graphical", "reboot"], "correct": 2, "explanation": "The graphical target is equivalent to runlevel 5."},
+                {"id": 20, "type": "mcq", "question": "Which target is equivalent to runlevel 1?", "options": ["multi-user", "rescue", "graphical", "reboot"], "correct": 1, "explanation": "The rescue target is equivalent to runlevel 1 (single user mode)."},
+                {"id": 21, "type": "mcq", "question": "What does 'AllowIsolate' statement do in a target unit?", "options": ["Prevents the target from being isolated", "Determines whether this unit is affected when others call the system to start any isolating units", "Defines dependencies for the target", "Sets the default target"], "correct": 1, "explanation": "AllowIsolate statement is used to determine whether this unit is affected when others call the system to start any isolating units."},
+                {"id": 22, "type": "mcq", "question": "What does isolating targets mean?", "options": ["Running the target in the background", "Running the requested unit with all its dependencies and making sure nothing else is running", "Disabling all other units", "Creating a new target"], "correct": 1, "explanation": "Isolating targets means to run the requested unit with all its dependencies and making sure nothing else is running."},
+                {"id": 23, "type": "mcq", "question": "What command is used to switch to a different target?", "options": ["systemctl start", "systemctl enable", "systemctl isolate", "systemctl switch"], "correct": 2, "explanation": "You can switch the current state of your computer to a different target using the systemctl isolate command."},
+                {"id": 24, "type": "mcq", "question": "What do 'wants' define in systemd?", "options": ["Hard dependencies between units", "Which units are wanted when starting a specific target", "Conflicting units", "Unit priorities"], "correct": 1, "explanation": "Wants in systemd define which units are wanted when starting a specific target."},
+                {"id": 25, "type": "mcq", "question": "How are wants created in systemd?", "options": ["By editing configuration files", "By creating symbolic links in the /etc/systemd/system directory when units are enabled", "By running systemctl commands", "By modifying the kernel"], "correct": 1, "explanation": "Wants are created when systemd units are enabled, and this happens by creating a symbolic link in the /etc/systemd/system directory."},
+                {"id": 26, "type": "mcq", "question": "What does the 'Before' statement in a unit file do?", "options": ["Specifies units that must start before this unit", "Relates to another unit that is started after this unit", "Defines conflicts", "Sets the unit priority"], "correct": 1, "explanation": "The Before statement relates to another unit that is started after this unit."},
+                {"id": 27, "type": "mcq", "question": "What does the 'After' statement in a unit file do?", "options": ["Specifies units that should start after this unit", "Refers to a unit that needs to be started before this unit can be started", "Defines the unit's stop sequence", "Sets the unit's restart policy"], "correct": 1, "explanation": "The After unit refers to a unit that needs to be started before this unit can be started."},
+                {"id": 28, "type": "mcq", "question": "What is the default target typically set to?", "options": ["rescue.target", "multi-user.target or graphical.target", "emergency.target", "reboot.target"], "correct": 1, "explanation": "The default target is typically set to 3 or 5, which corresponds to multi-user.target or graphical.target."},
+                {"id": 29, "type": "mcq", "question": "Which command displays all active units?", "options": ["systemctl --all", "systemctl", "systemctl list", "systemctl show"], "correct": 1, "explanation": "Typing systemctl displays all active units."},
+                {"id": 30, "type": "mcq", "question": "Which command displays all available unit types?", "options": ["systemctl --all", "systemctl -t", "systemctl show", "systemctl list-types"], "correct": 1, "explanation": "Using systemctl -t allows you to see all available units types."}
+            ],
+            "true_false_questions": [
+                {"id": 31, "type": "true_false", "question": "Systemd is the traditional init system used in all Linux distributions.", "correct": false, "explanation": "Systemd is the new service in RHEL 7 and other modern distributions, replacing the traditional sysVinit."},
+                {"id": 32, "type": "true_false", "question": "User unit files take priority over runtime unit files.", "correct": true, "explanation": "User unit files take priority over runtime files, and runtime files take precedence over system unit files."},
+                {"id": 33, "type": "true_false", "question": "Unit files must have a name in the format type.unitname.", "correct": false, "explanation": "Unit files have names in the format unitname.type (e.g., sshd.service, not service.sshd)."},
+                {"id": 34, "type": "true_false", "question": "The [Unit] and [Install] sections are common to all unit files.", "correct": true, "explanation": "Common elements fall under the [Unit] and [Install] sections regardless of unit type."},
+                {"id": 35, "type": "true_false", "question": "A unit in the 'Inactive' state is currently running.", "correct": false, "explanation": "Inactive state means the unit is not running."},
+                {"id": 36, "type": "true_false", "question": "A unit with 'Enabled' status will be started at boot time.", "correct": true, "explanation": "Enabled state means the unit will be started at boot time."},
+                {"id": 37, "type": "true_false", "question": "Static units can be enabled using systemctl enable.", "correct": false, "explanation": "Static units cannot be enabled but may be started by another unit automatically."},
+                {"id": 38, "type": "true_false", "question": "Services are processes that provide specific functionality and allow external client connections.", "correct": true, "explanation": "Services are processes that provide specific functionality and allow connections from external clients."},
+                {"id": 39, "type": "true_false", "question": "The ExecStop line in a service file indicates how to start the unit.", "correct": false, "explanation": "ExecStop line indicates how to stop the unit. ExecStart indicates how to start it."},
+                {"id": 40, "type": "true_false", "question": "Mount units are used to manage system services.", "correct": false, "explanation": "Mount units are used to mount the file system, not to manage services."},
+                {"id": 41, "type": "true_false", "question": "The 'Conflicts' statement in a unit defines mutually exclusive units.", "correct": true, "explanation": "Conflicts statement is used to define mutually exclusive units that cannot be used together."},
+                {"id": 42, "type": "true_false", "question": "Targets are used to load other units in the right order and at the right moment.", "correct": true, "explanation": "Targets are special systemd unit types needed to load other units in the right order and at the right moment."},
+                {"id": 43, "type": "true_false", "question": "The halt target is equivalent to runlevel 6.", "correct": false, "explanation": "The halt target is equivalent to runlevel 0. Runlevel 6 is the reboot target."},
+                {"id": 44, "type": "true_false", "question": "The graphical target is equivalent to runlevel 5.", "correct": true, "explanation": "The graphical target is equivalent to runlevel 5."},
+                {"id": 45, "type": "true_false", "question": "Isolating targets means running the requested unit with all its dependencies while ensuring nothing else is running.", "correct": true, "explanation": "Isolating targets means to run the requested unit with all its dependencies and making sure nothing else is running."},
+                {"id": 46, "type": "true_false", "question": "The systemctl isolate command is used to switch to a different target.", "correct": true, "explanation": "You can switch the current state of your computer to a different target using the systemctl isolate command."},
+                {"id": 47, "type": "true_false", "question": "Wants define hard dependencies between units.", "correct": false, "explanation": "Wants define which units are wanted when starting a specific target, but they are soft dependencies."},
+                {"id": 48, "type": "true_false", "question": "Wants are created by creating symbolic links in the /etc/systemd/system directory when units are enabled.", "correct": true, "explanation": "Wants are created when systemd units are enabled by creating symbolic links in the /etc/systemd/system directory."},
+                {"id": 49, "type": "true_false", "question": "The 'Before' statement specifies units that must start before the current unit.", "correct": false, "explanation": "The Before statement relates to another unit that is started after this unit, not before."},
+                {"id": 50, "type": "true_false", "question": "Runtime unit files take precedence over system unit files.", "correct": true, "explanation": "Runtime unit files take precedence over system unit files, and user unit files take priority over runtime files."}
+            ]
+        };
+
+        let currentQuestion = 0;
+        let answers = {};
+        let allQuestions = [];
+
+        function initializeQuiz() {
+            allQuestions = [
+                ...quizData.mcq_questions,
+                ...quizData.true_false_questions
+            ];
+            console.log('Quiz initialized with', allQuestions.length, 'questions');
+        }
+
+        function startQuiz() {
+            document.getElementById('startSection').style.display = 'none';
+            document.getElementById('quizSection').classList.add('active');
+            currentQuestion = 0;
+            answers = {};
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            const question = allQuestions[currentQuestion];
+            
+            document.getElementById('questionNumber').textContent = 
+                `Question ${currentQuestion + 1} of ${allQuestions.length}`;
+            document.getElementById('questionText').textContent = question.question;
+            document.getElementById('questionCounter').textContent = 
+                `Question ${currentQuestion + 1} of ${allQuestions.length}`;
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            if (question.type === 'mcq') {
+                question.options.forEach((option, index) => {
+                    const optionDiv = document.createElement('label');
+                    optionDiv.className = 'option';
+                    optionDiv.innerHTML = `
+                        <input type="radio" name="answer" value="${index}">
+                        <span>${option}</span>
+                    `;
+                    
+                    if (answers[currentQuestion] !== undefined) {
+                        if (answers[currentQuestion] == index) {
+                            optionDiv.classList.add('selected');
+                        }
+                        if (answers[currentQuestion] == question.correct) {
+                            if (index == question.correct) {
+                                optionDiv.classList.add('correct');
+                            }
+                        } else if (answers[currentQuestion] == index) {
+                            optionDiv.classList.add('incorrect');
+                        }
+                    }
+                    
+                    optionDiv.querySelector('input').addEventListener('change', (e) => {
+                        answers[currentQuestion] = parseInt(e.target.value);
+                        updateProgress();
+                        showExplanation();
+                    });
+                    
+                    optionsContainer.appendChild(optionDiv);
+                });
+            } else {
+                ['True', 'False'].forEach((value, index) => {
+                    const optionDiv = document.createElement('label');
+                    optionDiv.className = 'option';
+                    optionDiv.innerHTML = `
+                        <input type="radio" name="answer" value="${value === 'True'}">
+                        <span>${value}</span>
+                    `;
+                    
+                    if (answers[currentQuestion] !== undefined) {
+                        if (answers[currentQuestion] == (value === 'True')) {
+                            optionDiv.classList.add('selected');
+                        }
+                        if (answers[currentQuestion] == question.correct) {
+                            if ((value === 'True') == question.correct) {
+                                optionDiv.classList.add('correct');
+                            }
+                        } else if (answers[currentQuestion] != undefined) {
+                            if ((value === 'True') == answers[currentQuestion]) {
+                                optionDiv.classList.add('incorrect');
+                            }
+                        }
+                    }
+                    
+                    optionDiv.querySelector('input').addEventListener('change', (e) => {
+                        answers[currentQuestion] = e.target.value === 'true';
+                        updateProgress();
+                        showExplanation();
+                    });
+                    
+                    optionsContainer.appendChild(optionDiv);
+                });
+            }
+
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').disabled = currentQuestion === allQuestions.length - 1;
+
+            if (answers[currentQuestion] !== undefined) {
+                showExplanation();
+            } else {
+                document.getElementById('explanation').classList.remove('show');
+            }
+
+            updateProgress();
+        }
+
+        function showExplanation() {
+            const question = allQuestions[currentQuestion];
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (answers[currentQuestion] !== undefined) {
+                const isCorrect = question.type === 'mcq' 
+                    ? answers[currentQuestion] == question.correct
+                    : answers[currentQuestion] == question.correct;
+                
+                explanationDiv.innerHTML = `
+                    <strong>${isCorrect ? '✅ Correct!' : '❌ Incorrect'}</strong><br>
+                    ${question.explanation}
+                `;
+                explanationDiv.classList.add('show');
+            }
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(answers).length;
+            document.getElementById('answeredCounter').textContent = `Answered: ${answered}/${allQuestions.length}`;
+            const progress = (answered / allQuestions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < allQuestions.length - 1) {
+                currentQuestion++;
+                displayQuestion();
+                document.getElementById('questionContainer').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                displayQuestion();
+                document.getElementById('questionContainer').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function showQuestionList() {
+            const modal = document.getElementById('questionListModal');
+            const content = document.getElementById('questionListContent');
+            content.innerHTML = '';
+
+            allQuestions.forEach((q, index) => {
+                const item = document.createElement('div');
+                item.className = 'question-item';
+                if (answers[index] !== undefined) {
+                    item.classList.add('answered');
+                } else {
+                    item.classList.add('unanswered');
+                }
+                if (index === currentQuestion) {
+                    item.classList.add('current');
+                }
+                
+                const statusText = answers[index] !== undefined ? '✓' : '✗';
+                item.innerHTML = `Q${index + 1}: ${q.question.substring(0, 50)}... <span class="answer-status">${statusText}</span>`;
+                item.onclick = () => {
+                    currentQuestion = index;
+                    displayQuestion();
+                    modal.style.display = 'none';
+                };
+                
+                content.appendChild(item);
+            });
+
+            modal.style.display = 'flex';
+        }
+
+        function closeQuestionList() {
+            document.getElementById('questionListModal').style.display = 'none';
+        }
+
+        function finishQuiz() {
+            document.getElementById('quizSection').classList.remove('active');
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            let correct = 0;
+            let incorrect = 0;
+            let unanswered = 0;
+
+            allQuestions.forEach((q, index) => {
+                if (answers[index] === undefined) {
+                    unanswered++;
+                } else {
+                    const isCorrect = q.type === 'mcq' 
+                        ? answers[index] == q.correct
+                        : answers[index] == q.correct;
+                    if (isCorrect) {
+                        correct++;
+                    } else {
+                        incorrect++;
+                    }
+                }
+            });
+
+            document.getElementById('scoreDisplay').textContent = `${correct}/${allQuestions.length}`;
+            const percentage = Math.round((correct / allQuestions.length) * 100);
+            document.getElementById('scorePercentage').textContent = `${percentage}%`;
+            document.getElementById('correctCount').textContent = correct;
+            document.getElementById('incorrectCount').textContent = incorrect;
+            document.getElementById('unansweredCount').textContent = unanswered;
+
+            const detailedResults = document.getElementById('detailedResults');
+            detailedResults.innerHTML = '<h3 style="margin-top: 20px; color: #333;">Detailed Results:</h3>';
+            
+            const resultsList = document.createElement('div');
+            resultsList.style.maxHeight = '300px';
+            resultsList.style.overflowY = 'auto';
+            resultsList.style.marginTop = '15px';
+
+            allQuestions.forEach((q, index) => {
+                const resultItem = document.createElement('div');
+                resultItem.style.padding = '10px';
+                resultItem.style.marginBottom = '8px';
+                resultItem.style.borderRadius = '5px';
+                resultItem.style.fontSize = '14px';
+
+                if (answers[index] === undefined) {
+                    resultItem.style.background = '#fff3cd';
+                    resultItem.style.borderLeft = '3px solid #ffc107';
+                    resultItem.innerHTML = `<strong>Q${index + 1}:</strong> Not answered`;
+                } else {
+                    const isCorrect = q.type === 'mcq' 
+                        ? answers[index] == q.correct
+                        : answers[index] == q.correct;
+                    
+                    if (isCorrect) {
+                        resultItem.style.background = '#d4edda';
+                        resultItem.style.borderLeft = '3px solid #28a745';
+                        resultItem.innerHTML = `<strong>Q${index + 1}:</strong> ✓ Correct`;
+                    } else {
+                        resultItem.style.background = '#f8d7da';
+                        resultItem.style.borderLeft = '3px solid #dc3545';
+                        resultItem.innerHTML = `<strong>Q${index + 1}:</strong> ✗ Incorrect`;
+                    }
+                }
+
+                resultsList.appendChild(resultItem);
+            });
+
+            detailedResults.appendChild(resultsList);
+        }
+
+        function restartQuiz() {
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('startSection').style.display = 'block';
+            currentQuestion = 0;
+            answers = {};
+        }
+
+        // Initialize on load
+        window.addEventListener('load', initializeQuiz);
+    </script>
+</body>
+</html>
