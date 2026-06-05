@@ -977,7 +977,7 @@
             }
 
             document.getElementById('prevBtn').disabled = currentQuestion === 0;
-            document.getElementById('nextBtn').disabled = !answers[q.id];
+            document.getElementById('nextBtn').disabled = false;
             document.getElementById('nextBtn').textContent = currentQuestion === allQuestions.length - 1 ? 'Submit Quiz' : 'Next →';
         }
 
