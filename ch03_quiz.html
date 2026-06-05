@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Quiz - CH03: Users and Permissions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .progress-section {
+            margin-bottom: 30px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .quiz-section {
+            display: none;
+        }
+
+        .quiz-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option input[type="radio"],
+        .option input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option.correct {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .option.incorrect {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+
+        .feedback-icon {
+            float: right;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .option.correct .feedback-icon {
+            color: #4caf50;
+        }
+
+        .option.incorrect .feedback-icon {
+            color: #f44336;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .results-section {
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 48px;
+            color: #667eea;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .score-percentage {
+            font-size: 24px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .results-summary {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            color: #666;
+        }
+
+        .summary-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .start-section {
+            text-align: center;
+        }
+
+        .start-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .start-section p {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .quiz-info {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .quiz-info strong {
+            color: #667eea;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .btn-nav {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-nav:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-nav:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .question-text {
+                font-size: 16px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .score-display {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Start Section -->
+        <div id="startSection" class="start-section">
+            <div class="header">
+                <h1>📚 CH03: Users and Permissions</h1>
+                <p>Comprehensive Quiz Assessment</p>
+            </div>
+
+            <h2>Welcome to the Quiz!</h2>
+            <p>Test your knowledge about Linux users, groups, file permissions, and access control.</p>
+            
+            <div class="quiz-info">
+                <strong>📝 Quiz Details:</strong><br>
+                • Total Questions: <strong>50</strong><br>
+                • Multiple Choice: <strong>30</strong><br>
+                • True/False: <strong>20</strong><br>
+                • Time Limit: <strong>No limit</strong><br>
+                • Instant Feedback: <strong>Yes</strong>
+            </div>
+
+            <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                After selecting an answer, the correct answer will be highlighted in green and incorrect answers in red. 
+                You can review your answers at the end and see a detailed summary.
+            </p>
+
+            <button class="btn-primary" onclick="startQuiz()" style="margin-top: 20px; width: 200px; margin-left: auto; margin-right: auto; display: block;">
+                Start Quiz →
+            </button>
+        </div>
+
+        <!-- Quiz Section -->
+        <div id="quizSection" class="quiz-section">
+            <div class="header">
+                <h1>📚 CH03: Users and Permissions</h1>
+                <p id="quizTitle"></p>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-info">
+                    <span id="questionCounter">Question 1 of 50</span>
+                    <span id="answeredCounter">Answered: 0/50</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div id="questionContainer">
+                <div class="question-number" id="questionNumber"></div>
+                <div class="question-text" id="questionText"></div>
+                <div class="options" id="optionsContainer"></div>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn-nav" id="prevBtn" onclick="previousQuestion()" disabled>← Previous</button>
+                <button class="btn-nav" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+
+            <div class="buttons" style="margin-top: 30px;">
+                <button class="btn-primary" onclick="finishQuiz()">Finish Quiz</button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="results-section">
+            <div class="header">
+                <h1>✅ Quiz Completed!</h1>
+                <p>Here's your performance summary</p>
+            </div>
+
+            <div class="score-display" id="scoreDisplay">0/50</div>
+            <div class="score-percentage" id="scorePercentage">0%</div>
+
+            <div class="results-summary">
+                <div class="summary-item">
+                    <span class="summary-label">Total Questions</span>
+                    <span class="summary-value">50</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Correct Answers</span>
+                    <span class="summary-value" id="correctCount">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Incorrect Answers</span>
+                    <span class="summary-value" id="incorrectCount">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Unanswered</span>
+                    <span class="summary-value" id="unansweredCount">50</span>
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="restartQuiz()" style="margin-top: 20px; width: 200px; margin-left: auto; margin-right: auto; display: block;">
+                Retake Quiz
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const allQuestions = [
+            // MCQ Questions (30)
+            {
+                id: 1,
+                type: 'mcq',
+                question: 'Which command is used to switch to another user account?',
+                options: ['sudo', 'su', 'switch', 'login'],
+                answer: 'su'
+            },
+            {
+                id: 2,
+                type: 'mcq',
+                question: 'What is the purpose of the sudo command?',
+                options: ['Switch user', 'Allow unprivileged users to run commands as root', 'Create new users', 'Delete files'],
+                answer: 'Allow unprivileged users to run commands as root'
+            },
+            {
+                id: 3,
+                type: 'mcq',
+                question: 'Which file contains user account information including UID and GID?',
+                options: ['/etc/shadow', '/etc/passwd', '/etc/group', '/etc/sudoers'],
+                answer: '/etc/passwd'
+            },
+            {
+                id: 4,
+                type: 'mcq',
+                question: 'What does the "x" in /etc/passwd represent?',
+                options: ['Encrypted password', 'Execute permission', 'User ID', 'Home directory'],
+                answer: 'Encrypted password'
+            },
+            {
+                id: 5,
+                type: 'mcq',
+                question: 'Which file stores encrypted passwords?',
+                options: ['/etc/passwd', '/etc/shadow', '/etc/group', '/etc/login.defs'],
+                answer: '/etc/shadow'
+            },
+            {
+                id: 6,
+                type: 'mcq',
+                question: 'What command is used to create a new user account?',
+                options: ['adduser', 'useradd', 'newuser', 'createuser'],
+                answer: 'useradd'
+            },
+            {
+                id: 7,
+                type: 'mcq',
+                question: 'Which option with useradd creates a system user?',
+                options: ['-s', '-r', '-c', '-e'],
+                answer: '-r'
+            },
+            {
+                id: 8,
+                type: 'mcq',
+                question: 'What command modifies user account properties?',
+                options: ['useradd', 'usermod', 'userdel', 'passwd'],
+                answer: 'usermod'
+            },
+            {
+                id: 9,
+                type: 'mcq',
+                question: 'Which command removes a user account?',
+                options: ['usermod', 'userdel', 'deluser', 'rmuser'],
+                answer: 'userdel'
+            },
+            {
+                id: 10,
+                type: 'mcq',
+                question: 'What does the -m option with usermod do?',
+                options: ['Modify password', 'Move home directory', 'Modify login name', 'Modify shell'],
+                answer: 'Move home directory'
+            },
+            {
+                id: 11,
+                type: 'mcq',
+                question: 'Which command changes user passwords?',
+                options: ['chpass', 'passwd', 'pwdchange', 'setpass'],
+                answer: 'passwd'
+            },
+            {
+                id: 12,
+                type: 'mcq',
+                question: 'What option with passwd deletes a user password?',
+                options: ['-e', '-l', '-d', '-x'],
+                answer: '-d'
+            },
+            {
+                id: 13,
+                type: 'mcq',
+                question: 'Which file contains group information?',
+                options: ['/etc/passwd', '/etc/shadow', '/etc/group', '/etc/sudoers'],
+                answer: '/etc/group'
+            },
+            {
+                id: 14,
+                type: 'mcq',
+                question: 'What command creates a new group?',
+                options: ['groupmod', 'groupadd', 'newgroup', 'addgroup'],
+                answer: 'groupadd'
+            },
+            {
+                id: 15,
+                type: 'mcq',
+                question: 'Which command modifies group properties?',
+                options: ['groupadd', 'groupmod', 'groupdel', 'gpasswd'],
+                answer: 'groupmod'
+            },
+            {
+                id: 16,
+                type: 'mcq',
+                question: 'What command removes a group?',
+                options: ['groupmod', 'groupdel', 'delgroup', 'rmgroup'],
+                answer: 'groupdel'
+            },
+            {
+                id: 17,
+                type: 'mcq',
+                question: 'Which command manages group membership?',
+                options: ['usermod', 'groupmod', 'gpasswd', 'groupadd'],
+                answer: 'gpasswd'
+            },
+            {
+                id: 18,
+                type: 'mcq',
+                question: 'What does "r" permission mean for a file?',
+                options: ['Run', 'Rename', 'Read', 'Remove'],
+                answer: 'Read'
+            },
+            {
+                id: 19,
+                type: 'mcq',
+                question: 'What does "w" permission mean for a file?',
+                options: ['Write', 'Wait', 'Watch', 'Walk'],
+                answer: 'Write'
+            },
+            {
+                id: 20,
+                type: 'mcq',
+                question: 'What does "x" permission mean for a file?',
+                options: ['Examine', 'Execute', 'Extend', 'Export'],
+                answer: 'Execute'
+            },
+            {
+                id: 21,
+                type: 'mcq',
+                question: 'What is the numeric value for read permission?',
+                options: ['1', '2', '4', '8'],
+                answer: '4'
+            },
+            {
+                id: 22,
+                type: 'mcq',
+                question: 'What is the numeric value for write permission?',
+                options: ['1', '2', '4', '8'],
+                answer: '2'
+            },
+            {
+                id: 23,
+                type: 'mcq',
+                question: 'What is the numeric value for execute permission?',
+                options: ['1', '2', '4', '8'],
+                answer: '1'
+            },
+            {
+                id: 24,
+                type: 'mcq',
+                question: 'What does SUID (Set User ID) do?',
+                options: ['Runs with group permissions', 'Runs with owner permissions', 'Allows sticky bit', 'Prevents execution'],
+                answer: 'Runs with owner permissions'
+            },
+            {
+                id: 25,
+                type: 'mcq',
+                question: 'What does SGID (Set Group ID) do?',
+                options: ['Runs with user permissions', 'Runs with group permissions', 'Allows sticky bit', 'Prevents execution'],
+                answer: 'Runs with group permissions'
+            },
+            {
+                id: 26,
+                type: 'mcq',
+                question: 'What is the numeric value for SUID?',
+                options: ['1xxx', '2xxx', '4xxx', '8xxx'],
+                answer: '4xxx'
+            },
+            {
+                id: 27,
+                type: 'mcq',
+                question: 'What is the numeric value for SGID?',
+                options: ['1xxx', '2xxx', '4xxx', '8xxx'],
+                answer: '2xxx'
+            },
+            {
+                id: 28,
+                type: 'mcq',
+                question: 'What is the numeric value for sticky bit?',
+                options: ['1xxx', '2xxx', '4xxx', '8xxx'],
+                answer: '1xxx'
+            },
+            {
+                id: 29,
+                type: 'mcq',
+                question: 'What command changes file ownership?',
+                options: ['chmod', 'chown', 'chgrp', 'chdir'],
+                answer: 'chown'
+            },
+            {
+                id: 30,
+                type: 'mcq',
+                question: 'What command changes file permissions?',
+                options: ['chown', 'chmod', 'chgrp', 'chdir'],
+                answer: 'chmod'
+            },
+
+            // True/False Questions (20)
+            {
+                id: 31,
+                type: 'tf',
+                question: 'The su - command starts a login shell with full user environment.',
+                answer: true
+            },
+            {
+                id: 32,
+                type: 'tf',
+                question: 'The su command without "-" starts a non-login shell.',
+                answer: true
+            },
+            {
+                id: 33,
+                type: 'tf',
+                question: 'sudo allows unprivileged users to run commands as root.',
+                answer: true
+            },
+            {
+                id: 34,
+                type: 'tf',
+                question: 'User passwords are stored in /etc/passwd file.',
+                answer: false
+            },
+            {
+                id: 35,
+                type: 'tf',
+                question: 'Encrypted passwords are stored in /etc/shadow file.',
+                answer: true
+            },
+            {
+                id: 36,
+                type: 'tf',
+                question: 'System accounts are used by people who need to work on a server.',
+                answer: false
+            },
+            {
+                id: 37,
+                type: 'tf',
+                question: 'The primary group is the group a user belongs to by default.',
+                answer: true
+            },
+            {
+                id: 38,
+                type: 'tf',
+                question: 'A user can be a member of only one group.',
+                answer: false
+            },
+            {
+                id: 39,
+                type: 'tf',
+                question: 'The skeleton directory is /etc/skcl.',
+                answer: true
+            },
+            {
+                id: 40,
+                type: 'tf',
+                question: 'The umask 0022 results in 644 permissions for files.',
+                answer: true
+            },
+            {
+                id: 41,
+                type: 'tf',
+                question: 'The umask 0022 results in 755 permissions for directories.',
+                answer: true
+            },
+            {
+                id: 42,
+                type: 'tf',
+                question: 'SUID allows a file to run with the owner\'s permissions.',
+                answer: true
+            },
+            {
+                id: 43,
+                type: 'tf',
+                question: 'SGID allows a file to run with the group\'s permissions.',
+                answer: true
+            },
+            {
+                id: 44,
+                type: 'tf',
+                question: 'The sticky bit prevents anyone except the owner from deleting a file.',
+                answer: true
+            },
+            {
+                id: 45,
+                type: 'tf',
+                question: 'The /tmp directory typically has the sticky bit set.',
+                answer: true
+            },
+            {
+                id: 46,
+                type: 'tf',
+                question: 'chmod 755 means rwxr-xr-x permissions.',
+                answer: true
+            },
+            {
+                id: 47,
+                type: 'tf',
+                question: 'chown command changes both owner and group of a file.',
+                answer: true
+            },
+            {
+                id: 48,
+                type: 'tf',
+                question: 'The visudo command safely edits the /etc/sudoers file.',
+                answer: true
+            },
+            {
+                id: 49,
+                type: 'tf',
+                question: 'The vipw command safely edits the /etc/passwd file.',
+                answer: true
+            },
+            {
+                id: 50,
+                type: 'tf',
+                question: 'Secondary groups provide additional access to files and directories.',
+                answer: true
+            }
+        ];
+
+        let currentQuestion = 0;
+        let answers = {};
+        let answered = {};
+
+        function initializeQuiz() {
+            currentQuestion = 0;
+            answers = {};
+            answered = {};
+        }
+
+        function startQuiz() {
+            initializeQuiz();
+            document.getElementById('startSection').classList.remove('active');
+            document.getElementById('quizSection').classList.add('active');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = allQuestions[currentQuestion];
+            const total = allQuestions.length;
+
+            document.getElementById('questionCounter').textContent = `Question ${currentQuestion + 1} of ${total}`;
+            const progress = ((currentQuestion + 1) / total) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('answeredCounter').textContent = `Answered: ${Object.keys(answered).length}/${total}`;
+
+            document.getElementById('questionText').textContent = q.question;
+
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            if (q.type === 'mcq') {
+                q.options.forEach((option, idx) => {
+                    const optionId = `option-${idx}`;
+                    const isSelected = answers[q.id] === option;
+                    const isAnswered = answered[q.id];
+                    const isCorrect = isAnswered && option === q.answer;
+                    const isIncorrect = isAnswered && isSelected && option !== q.answer;
+
+                    const html = `
+                        <div class="option ${isSelected ? 'selected' : ''} ${isCorrect ? 'correct' : ''} ${isIncorrect ? 'incorrect' : ''}" onclick="selectAnswer('${q.id}', '${option}', this)">
+                            <input type="radio" id="${optionId}" name="answer" value="${option}" ${isSelected ? 'checked' : ''}>
+                            <label for="${optionId}">
+                                <span>${option}</span>
+                            </label>
+                            ${isCorrect ? '<span class="feedback-icon">✓</span>' : ''}
+                            ${isIncorrect ? '<span class="feedback-icon">✗</span>' : ''}
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                });
+            } else {
+                const isAnswered = answered[q.id];
+                const isTrue = answers[q.id] === true;
+                const isFalse = answers[q.id] === false;
+
+                const trueCorrect = isAnswered && isTrue && q.answer === true;
+                const trueIncorrect = isAnswered && isTrue && q.answer === false;
+                const falseCorrect = isAnswered && isFalse && q.answer === false;
+                const falseIncorrect = isAnswered && isFalse && q.answer === true;
+
+                container.innerHTML = `
+                    <div class="option ${isTrue ? 'selected' : ''} ${trueCorrect ? 'correct' : ''} ${trueIncorrect ? 'incorrect' : ''}" onclick="selectAnswer('${q.id}', true, this)">
+                        <input type="radio" id="true-option" name="answer" value="true" ${isTrue ? 'checked' : ''}>
+                        <label for="true-option">
+                            <span style="color: #16a34a; font-weight: 700;">True</span>
+                        </label>
+                        ${trueCorrect ? '<span class="feedback-icon">✓</span>' : ''}
+                        ${trueIncorrect ? '<span class="feedback-icon">✗</span>' : ''}
+                    </div>
+                    <div class="option ${isFalse ? 'selected' : ''} ${falseCorrect ? 'correct' : ''} ${falseIncorrect ? 'incorrect' : ''}" onclick="selectAnswer('${q.id}', false, this)">
+                        <input type="radio" id="false-option" name="answer" value="false" ${isFalse ? 'checked' : ''}>
+                        <label for="false-option">
+                            <span style="color: #dc2626; font-weight: 700;">False</span>
+                        </label>
+                        ${falseCorrect ? '<span class="feedback-icon">✓</span>' : ''}
+                        ${falseIncorrect ? '<span class="feedback-icon">✗</span>' : ''}
+                    </div>
+                `;
+            }
+
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').disabled = false;
+            document.getElementById('nextBtn').textContent = currentQuestion === allQuestions.length - 1 ? 'Submit Quiz' : 'Next →';
+        }
+
+        function selectAnswer(questionId, answer, element) {
+            answers[questionId] = answer;
+            answered[questionId] = true;
+            showQuestion();
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < allQuestions.length - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion();
+            }
+        }
+
+        function finishQuiz() {
+            document.getElementById('quizSection').classList.remove('active');
+            document.getElementById('resultsSection').classList.add('active');
+            showResults();
+        }
+
+        function showResults() {
+            let correct = 0;
+            let incorrect = 0;
+            let unanswered = 0;
+
+            allQuestions.forEach(q => {
+                if (!answered[q.id]) {
+                    unanswered++;
+                } else if (answers[q.id] === q.answer) {
+                    correct++;
+                } else {
+                    incorrect++;
+                }
+            });
+
+            const percentage = Math.round((correct / allQuestions.length) * 100);
+
+            document.getElementById('scoreDisplay').textContent = `${correct}/${allQuestions.length}`;
+            document.getElementById('scorePercentage').textContent = `${percentage}%`;
+            document.getElementById('correctCount').textContent = correct;
+            document.getElementById('incorrectCount').textContent = incorrect;
+            document.getElementById('unansweredCount').textContent = unanswered;
+        }
+
+        function restartQuiz() {
+            document.getElementById('resultsSection').classList.remove('active');
+            document.getElementById('startSection').classList.add('active');
+        }
+    </script>
+</body>
+</html>
