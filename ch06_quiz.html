@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Quiz - CH06: Configuring Networking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .quiz-wrapper {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .question-counter {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .question-type {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f9f9ff;
+        }
+
+        .option input[type="radio"],
+        .option input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option.correct {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+
+        .option.incorrect {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .option-text {
+            display: inline;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        .feedback.correct {
+            background: #ecfdf5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .feedback.incorrect {
+            background: #fef2f2;
+            color: #7f1d1d;
+            border-left: 4px solid #ef4444;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: space-between;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-prev {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            background: #d0d0d0;
+        }
+
+        .btn-next {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results-container {
+            display: none;
+            text-align: center;
+        }
+
+        .results-container.show {
+            display: block;
+        }
+
+        .score-display {
+            font-size: 48px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 30px 0;
+        }
+
+        .score-message {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .results-summary {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .summary-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        .btn-restart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-home {
+            background: #e0e0e0;
+            color: #333;
+            padding: 15px 40px;
+            font-size: 16px;
+            margin-top: 20px;
+            margin-left: 10px;
+        }
+
+        .btn-home:hover {
+            background: #d0d0d0;
+        }
+
+        @media (max-width: 600px) {
+            .quiz-wrapper {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .question-text {
+                font-size: 16px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn-prev {
+                order: 2;
+            }
+
+            .btn-next {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Linux Quiz</h1>
+            <p>CH06: Configuring Networking</p>
+        </div>
+
+        <div class="quiz-wrapper">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="question-counter" id="questionCounter"></div>
+
+            <div id="quizContainer">
+                <div class="question-container">
+                    <div class="question-type" id="questionType"></div>
+                    <div class="question-text" id="questionText"></div>
+                    <div class="options" id="optionsContainer"></div>
+                    <div class="feedback" id="feedback"></div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-prev" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                    <button class="btn-next" id="nextBtn" onclick="nextQuestion()">Next →</button>
+                </div>
+            </div>
+
+            <div class="results-container" id="resultsContainer">
+                <h2>Quiz Completed! 🎉</h2>
+                <div class="score-display" id="scoreDisplay"></div>
+                <div class="score-message" id="scoreMessage"></div>
+                <div class="results-summary" id="resultsSummary"></div>
+                <button class="btn-restart" onclick="restartQuiz()">Retake Quiz</button>
+                <button class="btn-home" onclick="window.location.href='index.html'">Back to Home</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            // Multiple Choice Questions (30)
+            {
+                type: "multiple",
+                question: "What does NIC stand for?",
+                options: ["Network Interface Card", "Network Internal Connection", "Network Internet Control", "Network Interface Controller"],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "Which directory contains network configuration files in Red Hat systems?",
+                options: ["/etc/network", "/etc/sysconfig/network-scripts", "/etc/networking", "/etc/net"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What is the primary purpose of DNS?",
+                options: ["To manage IP addresses", "To translate domain names to IP addresses", "To configure firewalls", "To manage user accounts"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which file is used for local hostname resolution?",
+                options: ["/etc/resolv.conf", "/etc/hosts", "/etc/hostname", "/etc/nsswitch.conf"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What command displays network interfaces and their IP addresses?",
+                options: ["ifconfig", "ip addr show", "netstat -i", "route -n"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which command shows the routing table?",
+                options: ["route", "ip route show", "netstat -r", "All of the above"],
+                correct: 3
+            },
+            {
+                type: "multiple",
+                question: "What is the default port used by NTP?",
+                options: ["123", "53", "22", "80"],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "What does DHCP stand for?",
+                options: ["Dynamic Host Configuration Protocol", "Dynamic Host Control Protocol", "Direct Host Configuration Protocol", "Dynamic Hardware Configuration Protocol"],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "Which file contains DNS server addresses?",
+                options: ["/etc/hosts", "/etc/hostname", "/etc/resolv.conf", "/etc/network"],
+                correct: 2
+            },
+            {
+                type: "multiple",
+                question: "What command is used to set the hostname dynamically?",
+                options: ["hostnamectl", "nmtui", "hostname", "sethostname"],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "What is the purpose of /etc/nsswitch.conf?",
+                options: ["To configure DNS servers", "To specify order of name service lookups", "To set hostname", "To configure network interfaces"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which command shows listening ports and their services?",
+                options: ["netstat -tuln", "ss -tuln", "lsof -i", "All of the above"],
+                correct: 3
+            },
+            {
+                type: "multiple",
+                question: "What is NTP used for?",
+                options: ["Network traffic protocol", "Network time synchronization", "Network transfer protocol", "Network testing protocol"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What does Stratum 0 represent in NTP?",
+                options: ["Primary time server", "Secondary time server", "Reference clock", "NTP client"],
+                correct: 2
+            },
+            {
+                type: "multiple",
+                question: "Which tool is used for interactive network configuration in modern Linux?",
+                options: ["ifconfig", "nmtui", "route", "arp"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What is the format of entries in /etc/hosts file?",
+                options: ["HOSTNAME IP_ADDRESS", "IP_ADDRESS HOSTNAME ALIAS", "DOMAIN IP_ADDRESS", "INTERFACE IP_ADDRESS"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which command tests connectivity to a remote host?",
+                options: ["traceroute", "ping", "netstat", "route"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What is the purpose of the default gateway?",
+                options: ["To block traffic", "To route packets to other networks", "To configure DNS", "To manage users"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which command traces the network path to a destination?",
+                options: ["ping", "traceroute", "route", "netstat"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What is a subnet mask used for?",
+                options: ["To hide IP addresses", "To divide networks into subnets", "To encrypt traffic", "To manage firewall rules"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which NTP role synchronizes time from a server?",
+                options: ["NTP Server", "NTP Peer", "NTP Client", "NTP Primary"],
+                correct: 2
+            },
+            {
+                type: "multiple",
+                question: "What is the main configuration file for chrony NTP?",
+                options: ["/etc/ntp.conf", "/etc/chrony.conf", "/etc/time.conf", "/etc/ntp/chrony.conf"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which command checks NTP synchronization status?",
+                options: ["ntpstat", "chronyc tracking", "timedatectl", "All of the above"],
+                correct: 3
+            },
+            {
+                type: "multiple",
+                question: "What does FQDN stand for?",
+                options: ["Full Qualified Domain Name", "Fully Qualified Domain Name", "Full Quality Domain Name", "Fully Quality Domain Name"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which command enables the chronyd service at boot?",
+                options: ["systemctl start chronyd", "systemctl enable chronyd", "systemctl restart chronyd", "systemctl status chronyd"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What is the difference between static and dynamic network configuration?",
+                options: [
+                    "Static is faster",
+                    "Static uses fixed IP, dynamic uses DHCP",
+                    "Dynamic is more secure",
+                    "There is no difference"
+                ],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which command displays the current system time configuration?",
+                options: ["date", "timedatectl", "hwclock", "ntpq"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What is the purpose of the /etc/hostname file?",
+                options: ["To configure DNS", "To store the system hostname", "To configure network interfaces", "To manage firewall rules"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which command is used to configure network with nmcli?",
+                options: ["nmcli device", "nmcli connection", "nmcli networking", "All of the above"],
+                correct: 3
+            },
+
+            // True/False Questions (20)
+            {
+                type: "truefalse",
+                question: "DHCP provides static IP addresses to clients.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "The default gateway must be on the same network as the local IP address.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "DNS resolves IP addresses to domain names.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "NTP synchronizes system time across network systems.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "/etc/hosts file is checked after DNS queries.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "Stratum 1 NTP servers get time directly from atomic clocks.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "The ping command can be used to test network connectivity.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "Subnet masks are used to divide networks into smaller subnets.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "NTP uses TCP port 123 for communication.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "The /etc/nsswitch.conf file determines the order of name service lookups.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "IPv6 addresses are 32 bits long.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "The traceroute command shows the network path to a destination.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "FQDN includes only the hostname without the domain name.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "Chrony is a modern NTP implementation for Linux systems.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "The hostnamectl command can change the system hostname.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "Network interfaces in Linux always have names like eth0, eth1.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "The ss command is a replacement for the netstat command.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "DNS queries are typically made on port 53.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "Each NIC has a unique MAC address.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "Network configuration files in /etc/sysconfig/network-scripts require a system restart to apply.",
+                correct: false
+            }
+        ];
+
+        let currentQuestion = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let answered = new Array(quizData.length).fill(false);
+
+        function initQuiz() {
+            showQuestion(0);
+        }
+
+        function showQuestion(index) {
+            const question = quizData[index];
+            document.getElementById('questionCounter').textContent = `Question ${index + 1} of ${quizData.length}`;
+            document.getElementById('questionType').textContent = question.type === 'multiple' ? 'Multiple Choice' : 'True / False';
+            document.getElementById('questionText').textContent = question.question;
+
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            if (question.type === 'multiple') {
+                question.options.forEach((option, optionIndex) => {
+                    const div = document.createElement('div');
+                    div.className = 'option';
+                    if (userAnswers[index] === optionIndex) div.classList.add('selected');
+                    if (answered[index]) {
+                        if (optionIndex === question.correct) div.classList.add('correct');
+                        else if (optionIndex === userAnswers[index]) div.classList.add('incorrect');
+                    }
+                    div.innerHTML = `<input type="radio" name="answer" value="${optionIndex}" ${userAnswers[index] === optionIndex ? 'checked' : ''} onchange="selectAnswer(${optionIndex})"> <span class="option-text">${option}</span>`;
+                    optionsContainer.appendChild(div);
+                });
+            } else {
+                ['True', 'False'].forEach((option, optionIndex) => {
+                    const div = document.createElement('div');
+                    div.className = 'option';
+                    if (userAnswers[index] === optionIndex) div.classList.add('selected');
+                    if (answered[index]) {
+                        if (optionIndex === (question.correct ? 0 : 1)) div.classList.add('correct');
+                        else if (optionIndex === userAnswers[index]) div.classList.add('incorrect');
+                    }
+                    div.innerHTML = `<input type="radio" name="answer" value="${optionIndex}" ${userAnswers[index] === optionIndex ? 'checked' : ''} onchange="selectAnswer(${optionIndex})"> <span class="option-text">${option}</span>`;
+                    optionsContainer.appendChild(div);
+                });
+            }
+
+            updateProgressBar();
+            updateButtons();
+            showFeedback();
+        }
+
+        function selectAnswer(index) {
+            userAnswers[currentQuestion] = index;
+            answered[currentQuestion] = true;
+            showQuestion(currentQuestion);
+        }
+
+        function showFeedback() {
+            const feedbackDiv = document.getElementById('feedback');
+            if (!answered[currentQuestion]) {
+                feedbackDiv.classList.remove('show');
+                return;
+            }
+
+            const question = quizData[currentQuestion];
+            const isCorrect = question.type === 'multiple' 
+                ? userAnswers[currentQuestion] === question.correct
+                : (userAnswers[currentQuestion] === 0) === question.correct;
+
+            feedbackDiv.classList.add('show');
+            feedbackDiv.className = `feedback show ${isCorrect ? 'correct' : 'incorrect'}`;
+            feedbackDiv.textContent = isCorrect ? '✓ Correct!' : '✗ Incorrect!';
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                showQuestion(currentQuestion);
+            } else {
+                showResults();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+            }
+        }
+
+        function updateProgressBar() {
+            const progress = ((currentQuestion + 1) / quizData.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').textContent = currentQuestion === quizData.length - 1 ? 'Finish' : 'Next →';
+        }
+
+        function showResults() {
+            const correctCount = userAnswers.filter((answer, index) => {
+                const question = quizData[index];
+                if (question.type === 'multiple') return answer === question.correct;
+                else return (answer === 0) === question.correct;
+            }).length;
+
+            const percentage = Math.round((correctCount / quizData.length) * 100);
+
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('resultsContainer').classList.add('show');
+            document.getElementById('scoreDisplay').textContent = `${correctCount}/${quizData.length}`;
+            document.getElementById('scoreMessage').textContent = `You scored ${percentage}%`;
+
+            let summary = '';
+            userAnswers.forEach((answer, index) => {
+                const question = quizData[index];
+                const isCorrect = question.type === 'multiple' 
+                    ? answer === question.correct
+                    : (answer === 0) === question.correct;
+                summary += `<div class="summary-item"><span>Q${index + 1}: ${isCorrect ? '✓' : '✗'}</span></div>`;
+            });
+            document.getElementById('resultsSummary').innerHTML = summary;
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            userAnswers = new Array(quizData.length).fill(null);
+            answered = new Array(quizData.length).fill(false);
+            document.getElementById('quizContainer').style.display = 'block';
+            document.getElementById('resultsContainer').classList.remove('show');
+            showQuestion(0);
+        }
+
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>
