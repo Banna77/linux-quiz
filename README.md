@@ -1,4 +1,4 @@
-# 📚 Kernel Quiz App
+# 📚 Linux Quiz
 
 A comprehensive, interactive quiz application for testing knowledge about Linux kernel management, systemd, and boot processes.
 
