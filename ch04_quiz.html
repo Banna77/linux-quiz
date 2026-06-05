@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Quiz - CH04: ACL and SELinux Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .quiz-wrapper {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .question-counter {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .question-type {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f9f9ff;
+        }
+
+        .option input[type="radio"],
+        .option input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option.correct {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+
+        .option.incorrect {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .option-text {
+            display: inline;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        .feedback.correct {
+            background: #ecfdf5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .feedback.incorrect {
+            background: #fef2f2;
+            color: #7f1d1d;
+            border-left: 4px solid #ef4444;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: space-between;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-prev {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            background: #d0d0d0;
+        }
+
+        .btn-next {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results-container {
+            display: none;
+            text-align: center;
+        }
+
+        .results-container.show {
+            display: block;
+        }
+
+        .score-display {
+            font-size: 48px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 30px 0;
+        }
+
+        .score-message {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .results-summary {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .summary-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        .btn-restart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-home {
+            background: #e0e0e0;
+            color: #333;
+            padding: 15px 40px;
+            font-size: 16px;
+            margin-top: 20px;
+            margin-left: 10px;
+        }
+
+        .btn-home:hover {
+            background: #d0d0d0;
+        }
+
+        @media (max-width: 600px) {
+            .quiz-wrapper {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .question-text {
+                font-size: 16px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn-prev {
+                order: 2;
+            }
+
+            .btn-next {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Linux Quiz</h1>
+            <p>CH04: ACL and SELinux Management</p>
+        </div>
+
+        <div class="quiz-wrapper">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="question-counter" id="questionCounter"></div>
+
+            <div id="quizContainer">
+                <div class="question-container">
+                    <div class="question-type" id="questionType"></div>
+                    <div class="question-text" id="questionText"></div>
+                    <div class="options" id="optionsContainer"></div>
+                    <div class="feedback" id="feedback"></div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-prev" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                    <button class="btn-next" id="nextBtn" onclick="nextQuestion()">Next →</button>
+                </div>
+            </div>
+
+            <div class="results-container" id="resultsContainer">
+                <h2>Quiz Completed! 🎉</h2>
+                <div class="score-display" id="scoreDisplay"></div>
+                <div class="score-message" id="scoreMessage"></div>
+                <div class="results-summary" id="resultsSummary"></div>
+                <button class="btn-restart" onclick="restartQuiz()">Retake Quiz</button>
+                <button class="btn-home" onclick="window.location.href='index.html'">Back to Home</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            // Multiple Choice Questions (30)
+            {
+                type: "multiple",
+                question: "What is the main limitation of traditional Linux file permissions?",
+                options: [
+                    "Can only give permissions to one user or one group on the same file",
+                    "Can only be set by the file owner",
+                    "Cannot be changed after creation",
+                    "Only work for regular files"
+                ],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "Which command is used to view current ACL settings on a file?",
+                options: ["setfacl", "getfacl", "ls -l", "chmod"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What does the -m option in setfacl command do?",
+                options: [
+                    "Modifies current ACL settings",
+                    "Removes all ACL permissions",
+                    "Makes ACL recursive",
+                    "Displays ACL settings"
+                ],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "How do you mount a filesystem with ACL support?",
+                options: [
+                    "mount -o acl /dev/sda1",
+                    "mount /dev/sda1 -acl",
+                    "mount --enable-acl /dev/sda1",
+                    "mount -acl /dev/sda1"
+                ],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "What does the ACL mask define?",
+                options: [
+                    "The maximum effective permissions for any entry in the ACL",
+                    "The minimum permissions for all users",
+                    "The default permissions for new files",
+                    "The owner of the file"
+                ],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "Which option in setfacl makes the ACL setting recursive for all files and subdirectories?",
+                options: ["-m", "-R", "-d", "-b"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What does the -d option in setfacl do?",
+                options: [
+                    "Deletes the file",
+                    "Sets default ACL for new items in directory",
+                    "Displays current ACL",
+                    "Disables ACL"
+                ],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which command is used to install the ACL package?",
+                options: ["apt install acl", "yum install acl", "pacman -S acl", "All of the above"],
+                correct: 3
+            },
+            {
+                type: "multiple",
+                question: "What does 'ls -l' show when ACLs are set on a file?",
+                options: [
+                    "Full ACL details",
+                    "Just a + after the permissions",
+                    "Nothing different",
+                    "Error message"
+                ],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What is SELinux?",
+                options: [
+                    "A file backup system",
+                    "Security Enhanced Linux - a mandatory access control system",
+                    "A network protocol",
+                    "A shell scripting language"
+                ],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "How many SELinux modes are there?",
+                options: ["2", "3", "4", "5"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What does the 'enforcing' mode in SELinux do?",
+                options: [
+                    "Logs violations but does not enforce",
+                    "Actively enforces policies and denies unauthorized access",
+                    "Completely disables SELinux",
+                    "Allows all access"
+                ],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What does the 'permissive' mode in SELinux do?",
+                options: [
+                    "Actively enforces policies",
+                    "Completely disables SELinux",
+                    "Logs violations but does not enforce restrictions",
+                    "Allows only root access"
+                ],
+                correct: 2
+            },
+            {
+                type: "multiple",
+                question: "Which command shows the current SELinux mode?",
+                options: ["setenforce", "getenforce", "semanage", "sestatus"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What does the semanage command do?",
+                options: [
+                    "Manages SELinux policies and contexts",
+                    "Shows SELinux mode",
+                    "Enforces SELinux policies",
+                    "Disables SELinux"
+                ],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "What are the components of an SELinux context?",
+                options: [
+                    "User, Role, Type",
+                    "User, Role, Type, Level",
+                    "User, Group, Type",
+                    "User, Role, Permission"
+                ],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which command shows file contexts in SELinux?",
+                options: ["ls -l", "ls -Z", "ls -a", "ls -R"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What does 'setenforce 0' do?",
+                options: [
+                    "Enables enforcing mode",
+                    "Sets permissive mode",
+                    "Disables SELinux",
+                    "Restarts SELinux"
+                ],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "How do you list ports managed by SELinux?",
+                options: [
+                    "semanage port -l",
+                    "semanage ports",
+                    "semanage -p",
+                    "semanage list ports"
+                ],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "What command is used to restore file contexts in SELinux?",
+                options: ["restorecon", "semanage restore", "setenforce", "getenforce"],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "What is the syntax for setting an ACL for a user with setfacl?",
+                options: [
+                    "setfacl -m u:username:permissions /file",
+                    "setfacl -m username:permissions /file",
+                    "setfacl user:permissions /file",
+                    "setfacl -u username /file"
+                ],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "What is the syntax for setting an ACL for a group with setfacl?",
+                options: [
+                    "setfacl -m group:groupname:permissions /file",
+                    "setfacl -m g:groupname:permissions /file",
+                    "setfacl groupname:permissions /file",
+                    "setfacl -g groupname /file"
+                ],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What does 'setfacl -b' do?",
+                options: [
+                    "Backs up ACL settings",
+                    "Removes all ACL permissions",
+                    "Creates default ACL",
+                    "Shows ACL in binary format"
+                ],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "Which file system typically supports ACLs?",
+                options: ["FAT32", "ext4", "NTFS", "exFAT"],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "What is the purpose of the ACL mask?",
+                options: [
+                    "To hide files from users",
+                    "To define maximum effective permissions for ACL entries",
+                    "To encrypt file contents",
+                    "To backup file permissions"
+                ],
+                correct: 1
+            },
+            {
+                type: "multiple",
+                question: "How do you add a port in SELinux using semanage?",
+                options: [
+                    "semanage port -a -t type -p protocol port_number",
+                    "semanage port add port_number",
+                    "semanage port -n port_number",
+                    "semanage add port port_number"
+                ],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "What is the difference between ACL and SELinux?",
+                options: [
+                    "ACL is file-level, SELinux is system-wide",
+                    "SELinux is file-level, ACL is system-wide",
+                    "They are the same thing",
+                    "ACL is for users, SELinux is for groups"
+                ],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "Which command is used to check if a filesystem has ACL support?",
+                options: [
+                    "tune2fs -l /dev/partition",
+                    "mount | grep acl",
+                    "getfacl /",
+                    "acl --status"
+                ],
+                correct: 0
+            },
+            {
+                type: "multiple",
+                question: "What does 'setfacl -m d:g:sales:rx /data' do?",
+                options: [
+                    "Sets ACL for existing files",
+                    "Sets default ACL for new items in directory",
+                    "Deletes group ACL",
+                    "Displays default ACL"
+                ],
+                correct: 1
+            },
+
+            // True/False Questions (20)
+            {
+                type: "truefalse",
+                question: "ACL allows giving permissions to multiple users and groups on the same file.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "The 'ls -l' command shows all ACL details on a file.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "SELinux is disabled by default in most Linux distributions.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "The ACL mask defines the maximum effective permissions for any entry in the ACL.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "Default ACLs apply to all new files created in a directory.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "The getenforce command is used to set SELinux mode.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "SELinux has three modes: enforcing, permissive, and disabled.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "The -R option in setfacl makes ACL settings recursive.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "ACL package must be installed before using setfacl and getfacl commands.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "SELinux contexts consist of user, role, type, and level.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "The 'permissive' mode in SELinux enforces all policies strictly.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "You can change SELinux mode from enforcing to permissive using setenforce.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "The ls -Z command shows SELinux contexts for files.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "ACL and SELinux serve the same purpose in Linux security.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "The semanage command can manage SELinux ports and contexts.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "Default ACLs can be used to restrict permissions for 'others'.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "The -d option in setfacl deletes ACL entries.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "All filesystems support ACLs by default.",
+                correct: false
+            },
+            {
+                type: "truefalse",
+                question: "SELinux can be disabled by setting mode to 'disabled'.",
+                correct: true
+            },
+            {
+                type: "truefalse",
+                question: "The restorecon command restores SELinux file contexts.",
+                correct: true
+            }
+        ];
+
+        let currentQuestion = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let answered = new Array(quizData.length).fill(false);
+
+        function initQuiz() {
+            showQuestion(0);
+        }
+
+        function showQuestion(index) {
+            const question = quizData[index];
+            document.getElementById('questionCounter').textContent = `Question ${index + 1} of ${quizData.length}`;
+            document.getElementById('questionType').textContent = question.type === 'multiple' ? 'Multiple Choice' : 'True / False';
+            document.getElementById('questionText').textContent = question.question;
+
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            if (question.type === 'multiple') {
+                question.options.forEach((option, optionIndex) => {
+                    const div = document.createElement('div');
+                    div.className = 'option';
+                    if (userAnswers[index] === optionIndex) div.classList.add('selected');
+                    if (answered[index]) {
+                        if (optionIndex === question.correct) div.classList.add('correct');
+                        else if (optionIndex === userAnswers[index]) div.classList.add('incorrect');
+                    }
+                    div.innerHTML = `<input type="radio" name="answer" value="${optionIndex}" ${userAnswers[index] === optionIndex ? 'checked' : ''} onchange="selectAnswer(${optionIndex})"> <span class="option-text">${option}</span>`;
+                    optionsContainer.appendChild(div);
+                });
+            } else {
+                ['True', 'False'].forEach((option, optionIndex) => {
+                    const div = document.createElement('div');
+                    div.className = 'option';
+                    if (userAnswers[index] === optionIndex) div.classList.add('selected');
+                    if (answered[index]) {
+                        if (optionIndex === (question.correct ? 0 : 1)) div.classList.add('correct');
+                        else if (optionIndex === userAnswers[index]) div.classList.add('incorrect');
+                    }
+                    div.innerHTML = `<input type="radio" name="answer" value="${optionIndex}" ${userAnswers[index] === optionIndex ? 'checked' : ''} onchange="selectAnswer(${optionIndex})"> <span class="option-text">${option}</span>`;
+                    optionsContainer.appendChild(div);
+                });
+            }
+
+            updateProgressBar();
+            updateButtons();
+            showFeedback();
+        }
+
+        function selectAnswer(index) {
+            userAnswers[currentQuestion] = index;
+            answered[currentQuestion] = true;
+            showQuestion(currentQuestion);
+        }
+
+        function showFeedback() {
+            const feedbackDiv = document.getElementById('feedback');
+            if (!answered[currentQuestion]) {
+                feedbackDiv.classList.remove('show');
+                return;
+            }
+
+            const question = quizData[currentQuestion];
+            const isCorrect = question.type === 'multiple' 
+                ? userAnswers[currentQuestion] === question.correct
+                : (userAnswers[currentQuestion] === 0) === question.correct;
+
+            feedbackDiv.classList.add('show');
+            feedbackDiv.className = `feedback show ${isCorrect ? 'correct' : 'incorrect'}`;
+            feedbackDiv.textContent = isCorrect ? '✓ Correct!' : '✗ Incorrect!';
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                showQuestion(currentQuestion);
+            } else {
+                showResults();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+            }
+        }
+
+        function updateProgressBar() {
+            const progress = ((currentQuestion + 1) / quizData.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').textContent = currentQuestion === quizData.length - 1 ? 'Finish' : 'Next →';
+        }
+
+        function showResults() {
+            const correctCount = userAnswers.filter((answer, index) => {
+                const question = quizData[index];
+                if (question.type === 'multiple') return answer === question.correct;
+                else return (answer === 0) === question.correct;
+            }).length;
+
+            const percentage = Math.round((correctCount / quizData.length) * 100);
+
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('resultsContainer').classList.add('show');
+            document.getElementById('scoreDisplay').textContent = `${correctCount}/${quizData.length}`;
+            document.getElementById('scoreMessage').textContent = `You scored ${percentage}%`;
+
+            let summary = '';
+            userAnswers.forEach((answer, index) => {
+                const question = quizData[index];
+                const isCorrect = question.type === 'multiple' 
+                    ? answer === question.correct
+                    : (answer === 0) === question.correct;
+                summary += `<div class="summary-item"><span>Q${index + 1}: ${isCorrect ? '✓' : '✗'}</span></div>`;
+            });
+            document.getElementById('resultsSummary').innerHTML = summary;
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            userAnswers = new Array(quizData.length).fill(null);
+            answered = new Array(quizData.length).fill(false);
+            document.getElementById('quizContainer').style.display = 'block';
+            document.getElementById('resultsContainer').classList.remove('show');
+            showQuestion(0);
+        }
+
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>
