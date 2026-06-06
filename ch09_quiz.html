@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH09: Configuring a Basic Apache Server - Linux Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .progress-container {
+            margin-bottom: 30px;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .question-section {
+            margin-bottom: 30px;
+        }
+
+        .question-number {
+            color: #667eea;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f5f5ff;
+        }
+
+        .option input[type="radio"],
+        .option input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #f5f5ff;
+        }
+
+        .option.correct {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .option.incorrect {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+
+        .option-text {
+            display: inline;
+            color: #333;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        .feedback.correct {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+
+        .feedback.incorrect {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-prev {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            background: #d0d0d0;
+        }
+
+        .btn-next {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results {
+            display: none;
+            text-align: center;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .results-header {
+            margin-bottom: 30px;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            color: white;
+        }
+
+        .score-number {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .score-label {
+            font-size: 14px;
+        }
+
+        .results-summary {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            color: #666;
+        }
+
+        .summary-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 40px;
+            font-size: 16px;
+        }
+
+        .btn-restart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .question-list {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .question-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .question-item:hover {
+            background: #e0e0e0;
+        }
+
+        .question-item.answered {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .question-item.current {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .question-item.unanswered {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖥️ CH09: Configuring a Basic Apache Server</h1>
+            <p>Master Apache web server configuration, virtual hosts, and TLS/SSL setup</p>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text">
+                <span id="currentQuestion">1</span> / <span id="totalQuestions">50</span>
+            </div>
+        </div>
+
+        <div id="quizContent">
+            <div class="question-section">
+                <div class="question-number" id="questionType"></div>
+                <div class="question-text" id="questionText"></div>
+                <div class="options" id="optionsContainer"></div>
+                <div class="feedback" id="feedback"></div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn-prev" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn-next" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+
+            <div class="question-list" id="questionList"></div>
+        </div>
+
+        <div id="resultsContent" class="results">
+            <div class="results-header">
+                <h2>Quiz Completed! 🎉</h2>
+                <div class="score-circle">
+                    <div class="score-number" id="finalScore">0%</div>
+                    <div class="score-label">Your Score</div>
+                </div>
+            </div>
+
+            <div class="results-summary">
+                <div class="summary-item">
+                    <span class="summary-label">Total Questions:</span>
+                    <span class="summary-value" id="summaryTotal">50</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Correct Answers:</span>
+                    <span class="summary-value" id="summaryCorrect">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Incorrect Answers:</span>
+                    <span class="summary-value" id="summaryIncorrect">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Unanswered:</span>
+                    <span class="summary-value" id="summaryUnanswered">0</span>
+                </div>
+            </div>
+
+            <button class="btn-restart" onclick="restartQuiz()">Restart Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            // Multiple Choice Questions (1-30)
+            {
+                type: "multiple",
+                question: "What is the main package required for a basic Apache web server installation?",
+                options: ["apache", "httpd", "apache2", "web-server"],
+                correct: 1,
+                explanation: "The httpd package contains everything needed for a basic operational Apache web server."
+            },
+            {
+                type: "multiple",
+                question: "Where is the main Apache configuration file located?",
+                options: ["/etc/apache/httpd.conf", "/etc/httpd/conf/httpd.conf", "/var/www/httpd.conf", "/opt/httpd/conf"],
+                correct: 1,
+                explanation: "The main configuration file is located at /etc/httpd/conf/httpd.conf"
+            },
+            {
+                type: "multiple",
+                question: "What is the default port for HTTP connections?",
+                options: ["8080", "443", "80", "3000"],
+                correct: 2,
+                explanation: "HTTP uses port 80 by default, while HTTPS uses port 443."
+            },
+            {
+                type: "multiple",
+                question: "Where should additional virtual host configurations be placed?",
+                options: ["/etc/httpd/conf/httpd.conf", "/etc/httpd/conf.d/", "/var/www/", "/etc/apache/"],
+                correct: 1,
+                explanation: "Additional configurations should be placed in /etc/httpd/conf.d/ directory."
+            },
+            {
+                type: "multiple",
+                question: "What is the default DocumentRoot directory for Apache?",
+                options: ["/var/www", "/var/www/html", "/home/www", "/opt/www"],
+                correct: 1,
+                explanation: "The default DocumentRoot is /var/www/html where Apache looks for web content."
+            },
+            {
+                type: "multiple",
+                question: "Which directive specifies the administrator's email address in Apache?",
+                options: ["AdminEmail", "ServerAdmin", "ContactEmail", "MailAdmin"],
+                correct: 1,
+                explanation: "The ServerAdmin directive specifies the administrator's email address."
+            },
+            {
+                type: "multiple",
+                question: "What does the AllowOverride directive control?",
+                options: ["User access levels", ".htaccess file usage", "SSL settings", "Virtual hosts"],
+                correct: 1,
+                explanation: "AllowOverride controls whether httpd reads .htaccess files in directories."
+            },
+            {
+                type: "multiple",
+                question: "Which file is used for SSL/TLS configuration in Apache?",
+                options: ["httpd.conf", "ssl.conf", "tls.conf", "security.conf"],
+                correct: 1,
+                explanation: "The ssl.conf file in /etc/httpd/conf.d/ contains SSL/TLS configuration."
+            },
+            {
+                type: "multiple",
+                question: "What is the default file Apache looks for when accessing a directory?",
+                options: ["default.html", "index.html", "home.html", "welcome.html"],
+                correct: 1,
+                explanation: "Apache looks for index.html by default via the DirectoryIndex directive."
+            },
+            {
+                type: "multiple",
+                question: "Which command is used to start the Apache service?",
+                options: ["apache start", "httpd start", "systemctl start httpd", "service apache start"],
+                correct: 2,
+                explanation: "Use 'systemctl start httpd' to start the Apache service on modern systems."
+            },
+            {
+                type: "multiple",
+                question: "What does a chroot environment provide for Apache?",
+                options: ["Better performance", "A fake root directory for security", "SSL encryption", "Virtual hosts"],
+                correct: 1,
+                explanation: "Chroot provides a fake root directory, limiting file system access for security."
+            },
+            {
+                type: "multiple",
+                question: "Which directive enables SSL/TLS for a virtual host?",
+                options: ["EnableSSL", "SSLEngine on", "TLSEnabled", "SecureConnection"],
+                correct: 1,
+                explanation: "The 'SSLEngine on' directive enables SSL/TLS for a virtual host."
+            },
+            {
+                type: "multiple",
+                question: "What is required to create a self-signed certificate?",
+                options: ["A Certificate Authority", "openssl command", "A domain name", "A web server"],
+                correct: 1,
+                explanation: "The openssl command is used to generate self-signed certificates."
+            },
+            {
+                type: "multiple",
+                question: "Which port is used for HTTPS connections?",
+                options: ["80", "8080", "443", "8443"],
+                correct: 2,
+                explanation: "HTTPS uses port 443 by default for secure connections."
+            },
+            {
+                type: "multiple",
+                question: "What does the VirtualHost directive define?",
+                options: ["A remote server", "A website on the same server", "A backup server", "A proxy server"],
+                correct: 1,
+                explanation: "VirtualHost allows multiple websites to run on a single Apache server."
+            },
+            {
+                type: "multiple",
+                question: "Which file contains the error logs for Apache?",
+                options: ["/var/log/apache.log", "/var/log/httpd/error_log", "/var/log/errors", "/etc/httpd/logs"],
+                correct: 1,
+                explanation: "Apache error logs are typically in /var/log/httpd/error_log"
+            },
+            {
+                type: "multiple",
+                question: "What is the purpose of the ServerName directive?",
+                options: ["Set the server's IP address", "Define the domain name", "Configure the port", "Enable SSL"],
+                correct: 1,
+                explanation: "ServerName specifies the primary domain name for a virtual host."
+            },
+            {
+                type: "multiple",
+                question: "Which command enables Apache to start on system boot?",
+                options: ["systemctl enable httpd", "systemctl autostart httpd", "systemctl boot httpd", "systemctl init httpd"],
+                correct: 0,
+                explanation: "'systemctl enable httpd' ensures Apache starts automatically on boot."
+            },
+            {
+                type: "multiple",
+                question: "What does the 'Require all granted' directive do?",
+                options: ["Deny all access", "Allow all access", "Require authentication", "Enable SSL"],
+                correct: 1,
+                explanation: "'Require all granted' allows all access to the specified directory."
+            },
+            {
+                type: "multiple",
+                question: "Which file contains the access logs for Apache?",
+                options: ["/var/log/access.log", "/var/log/httpd/access_log", "/var/log/apache", "/etc/httpd/access"],
+                correct: 1,
+                explanation: "Apache access logs are typically in /var/log/httpd/access_log"
+            },
+            {
+                type: "multiple",
+                question: "What is the SSLCertificateFile directive used for?",
+                options: ["Specify the private key", "Specify the certificate file path", "Enable SSL", "Configure ports"],
+                correct: 1,
+                explanation: "SSLCertificateFile specifies the path to the SSL certificate file."
+            },
+            {
+                type: "multiple",
+                question: "Which symbolic link in /etc/httpd points to the modules directory?",
+                options: ["logs", "modules", "run", "conf"],
+                correct: 1,
+                explanation: "The 'modules' symbolic link points to /usr/lib64/httpd/modules"
+            },
+            {
+                type: "multiple",
+                question: "What does the CustomLog directive configure?",
+                options: ["Error logging", "Access logging", "Debug logging", "Security logging"],
+                correct: 1,
+                explanation: "CustomLog configures the access log file and format for Apache."
+            },
+            {
+                type: "multiple",
+                question: "Which command is used to verify Apache configuration syntax?",
+                options: ["httpd -t", "apache -check", "httpd -syntax", "apache -validate"],
+                correct: 0,
+                explanation: "'httpd -t' tests the configuration file for syntax errors."
+            },
+            {
+                type: "multiple",
+                question: "What is the purpose of the Directory directive in httpd.conf?",
+                options: ["List directories", "Set permissions for a directory", "Create directories", "Delete directories"],
+                correct: 1,
+                explanation: "Directory blocks set parameters specific to one directory or location."
+            },
+            {
+                type: "multiple",
+                question: "Which directive specifies where to look for web content?",
+                options: ["ContentRoot", "DocumentRoot", "WebRoot", "SiteRoot"],
+                correct: 1,
+                explanation: "DocumentRoot specifies the default location where Apache looks for web content."
+            },
+            {
+                type: "multiple",
+                question: "What does the Listen directive specify?",
+                options: ["The server name", "The port to listen on", "The document root", "The log file"],
+                correct: 1,
+                explanation: "Listen specifies the port that the httpd process listens on."
+            },
+            {
+                type: "multiple",
+                question: "Which file contains the SSL certificate key?",
+                options: ["SSLCertificateFile", "SSLCertificateKeyFile", "SSLKeyFile", "PrivateKeyFile"],
+                correct: 1,
+                explanation: "SSLCertificateKeyFile specifies the path to the private key file."
+            },
+            {
+                type: "multiple",
+                question: "What is the purpose of the ErrorLog directive?",
+                options: ["Display errors", "Specify error log file location", "Configure error pages", "Enable debugging"],
+                correct: 1,
+                explanation: "ErrorLog specifies where Apache writes error messages."
+            },
+
+            // True/False Questions (31-50)
+            {
+                type: "truefalse",
+                question: "Apache can only serve one website per server.",
+                correct: false,
+                explanation: "Apache can serve multiple websites using virtual hosts."
+            },
+            {
+                type: "truefalse",
+                question: "The default HTTP port is 8080.",
+                correct: false,
+                explanation: "The default HTTP port is 80, not 8080."
+            },
+            {
+                type: "truefalse",
+                question: "HTTPS uses port 443 by default.",
+                correct: true,
+                explanation: "HTTPS (HTTP Secure) uses port 443 for encrypted connections."
+            },
+            {
+                type: "truefalse",
+                question: "AllowOverride None means Apache will read .htaccess files.",
+                correct: false,
+                explanation: "AllowOverride None means Apache will NOT read .htaccess files."
+            },
+            {
+                type: "truefalse",
+                question: "Virtual hosts allow multiple websites on a single Apache server.",
+                correct: true,
+                explanation: "Virtual hosts enable hosting multiple websites on one server."
+            },
+            {
+                type: "truefalse",
+                question: "Self-signed certificates are suitable for production environments.",
+                correct: false,
+                explanation: "Self-signed certificates are for testing; production requires CA-signed certificates."
+            },
+            {
+                type: "truefalse",
+                question: "The httpd package is required for Apache web server.",
+                correct: true,
+                explanation: "The httpd package contains the Apache HTTP Server."
+            },
+            {
+                type: "truefalse",
+                question: "DocumentRoot specifies the administrator's email address.",
+                correct: false,
+                explanation: "DocumentRoot specifies the web content directory; ServerAdmin specifies the email."
+            },
+            {
+                type: "truefalse",
+                question: "Chroot environment provides a fake root directory for security.",
+                correct: true,
+                explanation: "Chroot limits file system access by providing a fake root directory."
+            },
+            {
+                type: "truefalse",
+                question: "SSLEngine off enables SSL/TLS for a virtual host.",
+                correct: false,
+                explanation: "'SSLEngine on' enables SSL/TLS; 'off' disables it."
+            },
+            {
+                type: "truefalse",
+                question: "The main configuration file is located at /etc/httpd/conf/httpd.conf.",
+                correct: true,
+                explanation: "The main Apache configuration file is at /etc/httpd/conf/httpd.conf"
+            },
+            {
+                type: "truefalse",
+                question: "Virtual host configurations should be in /etc/httpd/conf.d/ directory.",
+                correct: true,
+                explanation: "Additional configurations, including virtual hosts, go in /etc/httpd/conf.d/"
+            },
+            {
+                type: "truefalse",
+                question: "Apache looks for welcome.html by default in directories.",
+                correct: false,
+                explanation: "Apache looks for index.html by default, not welcome.html."
+            },
+            {
+                type: "truefalse",
+                question: "systemctl enable httpd makes Apache start on system boot.",
+                correct: true,
+                explanation: "'systemctl enable httpd' configures Apache to start automatically on boot."
+            },
+            {
+                type: "truefalse",
+                question: "The 'Require all granted' directive denies all access.",
+                correct: false,
+                explanation: "'Require all granted' allows all access to the directory."
+            },
+            {
+                type: "truefalse",
+                question: "SSL/TLS configuration is in the ssl.conf file.",
+                correct: true,
+                explanation: "SSL/TLS configuration is typically in /etc/httpd/conf.d/ssl.conf"
+            },
+            {
+                type: "truefalse",
+                question: "The ServerName directive defines the website's domain name.",
+                correct: true,
+                explanation: "ServerName specifies the primary domain name for a virtual host."
+            },
+            {
+                type: "truefalse",
+                question: "Apache error logs are in /var/log/httpd/error_log.",
+                correct: true,
+                explanation: "Error logs are typically located at /var/log/httpd/error_log"
+            },
+            {
+                type: "truefalse",
+                question: "The VirtualHost directive allows running multiple websites on one server.",
+                correct: true,
+                explanation: "VirtualHost enables multiple websites on a single Apache server."
+            },
+            {
+                type: "truefalse",
+                question: "Public and private key certificates are used for TLS encryption.",
+                correct: true,
+                explanation: "TLS uses public/private key pairs for encryption and authentication."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let answers = new Array(quizData.length).fill(null);
+        let answered = new Array(quizData.length).fill(false);
+
+        function initQuiz() {
+            document.getElementById('totalQuestions').textContent = quizData.length;
+            showQuestion(0);
+        }
+
+        function showQuestion(index) {
+            currentQuestion = index;
+            const question = quizData[index];
+            
+            document.getElementById('currentQuestion').textContent = index + 1;
+            document.getElementById('questionType').textContent = 
+                question.type === 'multiple' ? 'Multiple Choice' : 'True / False';
+            document.getElementById('questionText').textContent = question.question;
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            const options = question.type === 'truefalse' 
+                ? ['True', 'False'] 
+                : question.options;
+            
+            options.forEach((option, i) => {
+                const div = document.createElement('div');
+                div.className = 'option';
+                if (answers[index] === i) div.classList.add('selected');
+                
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.name = 'answer';
+                input.value = i;
+                input.checked = answers[index] === i;
+                input.onchange = () => selectAnswer(i);
+                
+                const label = document.createElement('label');
+                label.style.cursor = 'pointer';
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+                label.appendChild(input);
+                label.appendChild(document.createTextNode(option));
+                
+                div.appendChild(label);
+                optionsContainer.appendChild(div);
+            });
+            
+            updateProgressBar();
+            updateQuestionList();
+            updateButtons();
+            showFeedback();
+        }
+
+        function selectAnswer(index) {
+            answers[currentQuestion] = index;
+            answered[currentQuestion] = true;
+            showQuestion(currentQuestion);
+        }
+
+        function showFeedback() {
+            const feedbackDiv = document.getElementById('feedback');
+            if (answers[currentQuestion] === null) {
+                feedbackDiv.classList.remove('show');
+                return;
+            }
+            
+            const question = quizData[currentQuestion];
+            const isCorrect = answers[currentQuestion] === question.correct;
+            
+            feedbackDiv.textContent = (isCorrect ? '✓ Correct! ' : '✗ Incorrect! ') + question.explanation;
+            feedbackDiv.className = 'feedback show ' + (isCorrect ? 'correct' : 'incorrect');
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < quizData.length - 1) {
+                showQuestion(currentQuestion + 1);
+            } else {
+                showResults();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                showQuestion(currentQuestion - 1);
+            }
+        }
+
+        function updateProgressBar() {
+            const progress = ((currentQuestion + 1) / quizData.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').textContent = 
+                currentQuestion === quizData.length - 1 ? 'Finish' : 'Next →';
+        }
+
+        function updateQuestionList() {
+            const list = document.getElementById('questionList');
+            list.innerHTML = '';
+            quizData.forEach((q, i) => {
+                const item = document.createElement('div');
+                item.className = 'question-item';
+                if (i === currentQuestion) item.classList.add('current');
+                else if (answered[i]) item.classList.add('answered');
+                else item.classList.add('unanswered');
+                
+                item.textContent = `Q${i + 1}: ${q.question.substring(0, 40)}...`;
+                item.onclick = () => showQuestion(i);
+                list.appendChild(item);
+            });
+        }
+
+        function showResults() {
+            const correct = answers.filter((a, i) => a === quizData[i].correct).length;
+            const percentage = Math.round((correct / quizData.length) * 100);
+            
+            document.getElementById('quizContent').style.display = 'none';
+            document.getElementById('resultsContent').classList.add('show');
+            
+            document.getElementById('finalScore').textContent = percentage + '%';
+            document.getElementById('summaryCorrect').textContent = correct;
+            document.getElementById('summaryIncorrect').textContent = quizData.length - correct - answered.filter(a => !a).length;
+            document.getElementById('summaryUnanswered').textContent = answered.filter(a => !a).length;
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            answers = new Array(quizData.length).fill(null);
+            answered = new Array(quizData.length).fill(false);
+            
+            document.getElementById('quizContent').style.display = 'block';
+            document.getElementById('resultsContent').classList.remove('show');
+            
+            showQuestion(0);
+        }
+
+        initQuiz();
+    </script>
+</body>
+</html>
