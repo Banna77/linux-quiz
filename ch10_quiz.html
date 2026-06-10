@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Quiz - CH10: Managing LVM Logical Volumes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .progress-section {
+            margin-bottom: 30px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .quiz-section {
+            display: none;
+        }
+
+        .quiz-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option input[type="radio"],
+        .option input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option.correct {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .option.incorrect {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+
+        .explanation {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+            display: none;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .explanation.show {
+            display: block;
+        }
+
+        .explanation strong {
+            color: #333;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .results-section {
+            text-align: center;
+            display: none;
+        }
+
+        .score-display {
+            font-size: 48px;
+            color: #667eea;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .score-percentage {
+            font-size: 24px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .results-summary {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            color: #666;
+        }
+
+        .summary-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .start-section {
+            text-align: center;
+        }
+
+        .start-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .start-section p {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .quiz-info {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .quiz-info strong {
+            color: #667eea;
+        }
+
+        .question-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .question-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .question-item:hover {
+            border-left-color: #667eea;
+            background: #f5f5f5;
+        }
+
+        .question-item.answered {
+            border-left-color: #4caf50;
+        }
+
+        .question-item.unanswered {
+            border-left-color: #f44336;
+        }
+
+        .question-item.current {
+            background: #f0f4ff;
+            border-left-color: #667eea;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .btn-nav {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-nav:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-nav:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .answer-status {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-correct {
+            color: #4caf50;
+        }
+
+        .status-incorrect {
+            color: #f44336;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .question-text {
+                font-size: 16px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .score-display {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Start Section -->
+        <div id="startSection" class="start-section">
+            <div class="header">
+                <h1>📚 CH10: Managing LVM Logical Volumes</h1>
+                <p>Comprehensive Quiz Assessment</p>
+            </div>
+
+            <h2>Welcome to the Quiz!</h2>
+            <p>Comprehensive quiz covering LVM architecture, creating PVs, VGs, LVs, and resizing storage.</p>
+            
+            <div class="quiz-info">
+                <strong>📝 Quiz Details:</strong><br>
+                • Total Questions: <strong>50</strong><br>
+                • Multiple Choice: <strong>30</strong><br>
+                • True/False: <strong>20</strong><br>
+                • Time Limit: <strong>No limit</strong><br>
+                • Instant Feedback: <strong>Yes</strong>
+            </div>
+
+            <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                After selecting an answer, the correct answer will be highlighted in green and incorrect answers in red. 
+                You can review your answers at the end and see a detailed summary.
+            </p>
+
+            <button class="btn-primary" onclick="startQuiz()" style="margin-top: 20px; width: 200px; margin-left: auto; margin-right: auto; display: block;">
+                Start Quiz →
+            </button>
+        </div>
+
+        <!-- Quiz Section -->
+        <div id="quizSection" class="quiz-section">
+            <div class="header">
+                <h1>📚 CH10: Managing LVM Logical Volumes</h1>
+                <p id="quizTitle"></p>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-info">
+                    <span id="questionCounter">Question 1 of 50</span>
+                    <span id="answeredCounter">Answered: 0/50</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div id="questionContainer">
+                <div class="question-number" id="questionNumber"></div>
+                <div class="question-text" id="questionText"></div>
+                <div class="options" id="optionsContainer"></div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn-nav" id="prevBtn" onclick="previousQuestion()" disabled>← Previous</button>
+                <button class="btn-nav" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+
+            <div class="buttons" style="margin-top: 30px;">
+                <button class="btn-secondary" onclick="showQuestionList()">📋 Questions</button>
+                <button class="btn-primary" onclick="finishQuiz()">Finish Quiz</button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="results-section">
+            <div class="header">
+                <h1>✅ Quiz Completed!</h1>
+                <p>Here's your performance summary</p>
+            </div>
+
+            <div class="score-display" id="scoreDisplay">0/50</div>
+            <div class="score-percentage" id="scorePercentage">0%</div>
+
+            <div class="results-summary">
+                <div class="summary-item">
+                    <span class="summary-label">Total Questions</span>
+                    <span class="summary-value">50</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Correct Answers</span>
+                    <span class="summary-value" id="correctCount">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Incorrect Answers</span>
+                    <span class="summary-value" id="incorrectCount">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Unanswered</span>
+                    <span class="summary-value" id="unansweredCount">50</span>
+                </div>
+            </div>
+
+            <div id="detailedResults"></div>
+
+            <button class="btn-primary" onclick="restartQuiz()" style="margin-top: 20px; width: 200px; margin-left: auto; margin-right: auto; display: block;">
+                Retake Quiz
+            </button>
+        </div>
+
+        <!-- Question List Modal -->
+        <div id="questionListModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; max-height: 600px; overflow-y: auto; width: 90%;">
+                <h2 style="margin-bottom: 20px; color: #333;">Questions Overview</h2>
+                <div id="questionListContent"></div>
+                <button class="btn-secondary" onclick="closeQuestionList()" style="width: 100%; margin-top: 20px;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = {
+        "title": "CH10: Managing LVM Logical Volumes",
+        "description": "Comprehensive quiz covering LVM architecture, creating PVs, VGs, LVs, and resizing storage.",
+        "mcq_questions": [
+                {
+                        "id": 1,
+                        "type": "mcq",
+                        "question": "What does LVM stand for?",
+                        "options": [
+                                "Linux Virtual Machine",
+                                "Logical Volume Management",
+                                "Local Volume Manager",
+                                "Logical Virtual Memory"
+                        ],
+                        "correct": 1,
+                        "explanation": "LVM stands for Logical Volume Management, a flexible solution for managing storage in Linux."
+                },
+                {
+                        "id": 2,
+                        "type": "mcq",
+                        "question": "What is the lowest layer in the LVM architecture?",
+                        "options": [
+                                "Volume Groups",
+                                "Logical Volumes",
+                                "Physical Volumes (Storage Devices)",
+                                "File Systems"
+                        ],
+                        "correct": 2,
+                        "explanation": "The lowest layer consists of storage devices (disks, partitions) flagged as Physical Volumes (PVs)."
+                },
+                {
+                        "id": 3,
+                        "type": "mcq",
+                        "question": "Which command is used to initialize a partition as a physical volume?",
+                        "options": [
+                                "vgcreate",
+                                "lvcreate",
+                                "pvcreate",
+                                "pvs"
+                        ],
+                        "correct": 2,
+                        "explanation": "The pvcreate command initializes physical volumes for use by LVM by writing metadata to them."
+                },
+                {
+                        "id": 4,
+                        "type": "mcq",
+                        "question": "What is the partition type code for LVM on an MBR disk?",
+                        "options": [
+                                "83",
+                                "8e",
+                                "82",
+                                "fd"
+                        ],
+                        "correct": 1,
+                        "explanation": "For MBR disks, the LVM partition type is 8e. For GUID disks, it is 8300."
+                },
+                {
+                        "id": 5,
+                        "type": "mcq",
+                        "question": "Which command shows a summary of all available physical volumes?",
+                        "options": [
+                                "pvdisplay",
+                                "pvs",
+                                "vgs",
+                                "lvs"
+                        ],
+                        "correct": 1,
+                        "explanation": "The pvs command provides a short summary of physical volumes and their attributes."
+                },
+                {
+                        "id": 6,
+                        "type": "mcq",
+                        "question": "In LVM, what are PEs?",
+                        "options": [
+                                "Physical Elements",
+                                "Primary Extents",
+                                "Physical Extents",
+                                "Partition Entities"
+                        ],
+                        "correct": 2,
+                        "explanation": "LVM chunks physical volumes into small building blocks called Physical Extents (PEs)."
+                },
+                {
+                        "id": 7,
+                        "type": "mcq",
+                        "question": "What is the default file system on RHEL 7 that does NOT support reducing its size?",
+                        "options": [
+                                "Ext4",
+                                "XFS",
+                                "Btrfs",
+                                "NTFS"
+                        ],
+                        "correct": 1,
+                        "explanation": "XFS is the default on RHEL 7; it can be increased in size but cannot be decreased."
+                },
+                {
+                        "id": 8,
+                        "type": "mcq",
+                        "question": "Which command is used to create a volume group named 'vgdata' using '/dev/sdb1'?",
+                        "options": [
+                                "pvcreate vgdata /dev/sdb1",
+                                "vgcreate vgdata /dev/sdb1",
+                                "lvcreate -n vgdata /dev/sdb1",
+                                "vgextend vgdata /dev/sdb1"
+                        ],
+                        "correct": 1,
+                        "explanation": "The vgcreate command creates a new volume group and assigns physical volumes to it."
+                },
+                {
+                        "id": 9,
+                        "type": "mcq",
+                        "question": "What is the maximum size for a Physical Extent (PE)?",
+                        "options": [
+                                "4 MiB",
+                                "32 MiB",
+                                "64 MiB",
+                                "128 MiB"
+                        ],
+                        "correct": 3,
+                        "explanation": "The PE size is specified as a multiple of 2 MiB, with a maximum size of 128 MiB."
+                },
+                {
+                        "id": 10,
+                        "type": "mcq",
+                        "question": "Which command displays detailed information about a volume group?",
+                        "options": [
+                                "vgs",
+                                "vgdisplay",
+                                "pvdisplay",
+                                "lsblk"
+                        ],
+                        "correct": 1,
+                        "explanation": "While vgs gives a summary, vgdisplay provides a detailed list of volume group properties."
+                },
+                {
+                        "id": 11,
+                        "type": "mcq",
+                        "question": "What is the purpose of an LVM snapshot?",
+                        "options": [
+                                "To speed up disk access",
+                                "To keep the current state of a logical volume for backup or revert",
+                                "To encrypt the logical volume",
+                                "To compress data on the disk"
+                        ],
+                        "correct": 1,
+                        "explanation": "Snapshots keep the state of a logical volume at a specific point in time, useful for backups or reverting changes."
+                },
+                {
+                        "id": 12,
+                        "type": "mcq",
+                        "question": "Which command is used to create a 5GB logical volume named 'lvdata' in 'vgdata'?",
+                        "options": [
+                                "lvcreate -n lvdata -L 5G vgdata",
+                                "lvcreate -n lvdata -l 5G vgdata",
+                                "vgcreate -L 5G lvdata vgdata",
+                                "pvcreate -L 5G lvdata"
+                        ],
+                        "correct": 0,
+                        "explanation": "The -L option is used for absolute size (e.g., 5G), while -n specifies the name."
+                },
+                {
+                        "id": 13,
+                        "type": "mcq",
+                        "question": "What is the relative size option to use half of the available space in a VG?",
+                        "options": [
+                                "-L 50%",
+                                "-l 50%VG",
+                                "-l 50%FREE",
+                                "-L 50%FREE"
+                        ],
+                        "correct": 2,
+                        "explanation": "The -l 50%FREE option tells lvcreate to use half of the currently unallocated space in the volume group."
+                },
+                {
+                        "id": 14,
+                        "type": "mcq",
+                        "question": "What is the naming pattern for LVM symbolic links in '/dev/mapper/'?",
+                        "options": [
+                                "lvname-vgname",
+                                "vgname-lvname",
+                                "vgname/lvname",
+                                "dm-number"
+                        ],
+                        "correct": 1,
+                        "explanation": "Symbolic links in /dev/mapper/ follow the pattern vgname-lvname (e.g., vgdata-lvdata)."
+                },
+                {
+                        "id": 15,
+                        "type": "mcq",
+                        "question": "Which command is used to add a new physical volume to an existing volume group?",
+                        "options": [
+                                "vgcreate",
+                                "vgextend",
+                                "vgreduce",
+                                "pvmove"
+                        ],
+                        "correct": 1,
+                        "explanation": "The vgextend command adds more storage to an existing volume group by adding physical volumes."
+                },
+                {
+                        "id": 16,
+                        "type": "mcq",
+                        "question": "Which command allows moving data within a volume group to replace failing hardware?",
+                        "options": [
+                                "pvremove",
+                                "pvmove",
+                                "vgreduce",
+                                "lvreduce"
+                        ],
+                        "correct": 1,
+                        "explanation": "The pvmove command moves data from one physical volume to another within the same volume group."
+                },
+                {
+                        "id": 17,
+                        "type": "mcq",
+                        "question": "Which command is used to resize a logical volume and its file system at the same time?",
+                        "options": [
+                                "lvresize -r",
+                                "lvextend -f",
+                                "vgextend -r",
+                                "fsck -r"
+                        ],
+                        "correct": 0,
+                        "explanation": "The -r (or --resizefs) option with lvresize or lvextend resizes the underlying file system automatically."
+                },
+                {
+                        "id": 18,
+                        "type": "mcq",
+                        "question": "What happens when you use 'lvresize -L +1G -r /dev/vgdata/lvdata'?",
+                        "options": [
+                                "It sets the total size to 1GB",
+                                "It adds 1GB to the current size and resizes the file system",
+                                "It reduces the size by 1GB",
+                                "It creates a new 1GB volume"
+                        ],
+                        "correct": 1,
+                        "explanation": "The '+' sign indicates that 1GB should be added to the existing size."
+                },
+                {
+                        "id": 19,
+                        "type": "mcq",
+                        "question": "What is 'device mapper' (dm)?",
+                        "options": [
+                                "A tool to format disks",
+                                "A generic kernel interface used to address storage devices like LVM and RAID",
+                                "A command to list partitions",
+                                "A backup utility"
+                        ],
+                        "correct": 1,
+                        "explanation": "Device mapper is a kernel interface used for LVM, software RAID, and multipath devices."
+                },
+                {
+                        "id": 20,
+                        "type": "mcq",
+                        "question": "How do you specify the number of extents to add using lvresize?",
+                        "options": [
+                                "-L",
+                                "-e",
+                                "-l",
+                                "-s"
+                        ],
+                        "correct": 2,
+                        "explanation": "The -l (lowercase L) option is used to specify the number of logical extents (LEs)."
+                },
+                {
+                        "id": 21,
+                        "type": "mcq",
+                        "question": "Which file system requires being unmounted (offline) before decreasing its size?",
+                        "options": [
+                                "XFS",
+                                "Ext4",
+                                "Btrfs",
+                                "Swap"
+                        ],
+                        "correct": 1,
+                        "explanation": "Decreasing an Ext4 file system size must be done offline (unmounted)."
+                },
+                {
+                        "id": 22,
+                        "type": "mcq",
+                        "question": "What is the command to create an XFS file system on an LVM volume?",
+                        "options": [
+                                "mkfs.xfs /dev/vgdata/lvdata",
+                                "format xfs /dev/vgdata/lvdata",
+                                "vgcreate xfs /dev/vgdata/lvdata",
+                                "mount -t xfs /dev/vgdata/lvdata"
+                        ],
+                        "correct": 0,
+                        "explanation": "The mkfs.xfs command is used to create the XFS file system on the device."
+                },
+                {
+                        "id": 23,
+                        "type": "mcq",
+                        "question": "What is the command to remove a physical volume from a volume group?",
+                        "options": [
+                                "vgextend",
+                                "vgreduce",
+                                "pvremove",
+                                "lvremove"
+                        ],
+                        "correct": 1,
+                        "explanation": "The vgreduce command is used to take physical volumes out of a volume group."
+                },
+                {
+                        "id": 24,
+                        "type": "mcq",
+                        "question": "Which command shows the current size of a mounted file system?",
+                        "options": [
+                                "lvs",
+                                "vgs",
+                                "df -h",
+                                "pvs"
+                        ],
+                        "correct": 2,
+                        "explanation": "The df -h command shows disk space usage and sizes for mounted file systems."
+                },
+                {
+                        "id": 25,
+                        "type": "mcq",
+                        "question": "What does 'lvresize -r -l 75%VG /dev/vgdata/lvdata' do?",
+                        "options": [
+                                "Adds 75% more space",
+                                "Resizes the volume to exactly 75% of the total VG size",
+                                "Resizes the volume to 75% of the free space",
+                                "Reduces the volume by 75%"
+                        ],
+                        "correct": 1,
+                        "explanation": "Specifying 75%VG (without a + or -) sets the absolute size to 75% of the volume group's total capacity."
+                },
+                {
+                        "id": 26,
+                        "type": "mcq",
+                        "question": "Which command is used to list all block devices and their mount points?",
+                        "options": [
+                                "lsblk",
+                                "fdisk -l",
+                                "pvs",
+                                "vgs"
+                        ],
+                        "correct": 0,
+                        "explanation": "lsblk lists information about all available or the specified block devices."
+                },
+                {
+                        "id": 27,
+                        "type": "mcq",
+                        "question": "In LVM, what are LEs?",
+                        "options": [
+                                "Logical Elements",
+                                "Logical Extents",
+                                "Linked Entities",
+                                "Local Extents"
+                        ],
+                        "correct": 1,
+                        "explanation": "Logical Extents (LEs) are the logical building blocks of a logical volume, mapping to Physical Extents (PEs)."
+                },
+                {
+                        "id": 28,
+                        "type": "mcq",
+                        "question": "What is the command to create a directory named '/files' for mounting?",
+                        "options": [
+                                "cd /files",
+                                "mkdir /files",
+                                "touch /files",
+                                "mount /files"
+                        ],
+                        "correct": 1,
+                        "explanation": "The mkdir command creates a new directory."
+                },
+                {
+                        "id": 29,
+                        "type": "mcq",
+                        "question": "Which file is edited to ensure a volume mounts automatically at boot?",
+                        "options": [
+                                "/etc/mtab",
+                                "/etc/fstab",
+                                "/etc/boot",
+                                "/etc/lvm.conf"
+                        ],
+                        "correct": 1,
+                        "explanation": "/etc/fstab (File System Table) contains information for automated mounting."
+                },
+                {
+                        "id": 30,
+                        "type": "mcq",
+                        "question": "What command verifies the entries in /etc/fstab by mounting all listed systems?",
+                        "options": [
+                                "mount -a",
+                                "mount -all",
+                                "vgscan",
+                                "lvscan"
+                        ],
+                        "correct": 0,
+                        "explanation": "The mount -a command mounts all file systems mentioned in /etc/fstab that are not already mounted."
+                }
+        ],
+        "true_false_questions": [
+                {
+                        "id": 31,
+                        "type": "true_false",
+                        "question": "LVM allows partitions to be grown dynamically, which is not possible with traditional partitions.",
+                        "correct": true,
+                        "explanation": "One of the main advantages of LVM is the ability to resize volumes without the rigidity of traditional partitions."
+                },
+                {
+                        "id": 32,
+                        "type": "true_false",
+                        "question": "Physical Volumes (PVs) are created on top of Logical Volumes (LVs).",
+                        "correct": false,
+                        "explanation": "It's the opposite: Logical Volumes are created on top of Volume Groups, which are made of Physical Volumes."
+                },
+                {
+                        "id": 33,
+                        "type": "true_false",
+                        "question": "A Logical Volume can consist of space from multiple Physical Volumes.",
+                        "correct": true,
+                        "explanation": "LVM abstracts the storage, allowing a single LV to span across multiple disks or PVs."
+                },
+                {
+                        "id": 34,
+                        "type": "true_false",
+                        "question": "XFS file systems can be reduced in size using LVM tools.",
+                        "correct": false,
+                        "explanation": "XFS can be grown but not shrunk (reduced)."
+                },
+                {
+                        "id": 35,
+                        "type": "true_false",
+                        "question": "Ext4 file systems support both increasing and decreasing their size.",
+                        "correct": true,
+                        "explanation": "Ext4 is flexible and supports both growing and shrinking, though shrinking usually requires unmounting."
+                },
+                {
+                        "id": 36,
+                        "type": "true_false",
+                        "question": "LVM snapshots contain a full copy of all data in the original volume at the time of creation.",
+                        "correct": false,
+                        "explanation": "Snapshots initially only copy metadata. Actual data blocks are only copied to the snapshot when they are modified in the original volume (Copy-on-Write)."
+                },
+                {
+                        "id": 37,
+                        "type": "true_false",
+                        "question": "The command 'pvcreate' writes metadata to a partition to make it usable in LVM.",
+                        "correct": true,
+                        "explanation": "pvcreate initializes the device by adding the necessary LVM headers and metadata."
+                },
+                {
+                        "id": 38,
+                        "type": "true_false",
+                        "question": "You can add a complete disk device (like /dev/sdc) to a VG without manually running pvcreate first.",
+                        "correct": true,
+                        "explanation": "The vgcreate utility will automatically flag the device as a PV if it hasn't been initialized yet."
+                },
+                {
+                        "id": 39,
+                        "type": "true_false",
+                        "question": "Physical Extent (PE) size is always a multiple of 2 MiB.",
+                        "correct": true,
+                        "explanation": "PE sizes are multiples of 2 MiB, ranging up to 128 MiB."
+                },
+                {
+                        "id": 40,
+                        "type": "true_false",
+                        "question": "Logical Volume sizes must be a multiple of the Physical Extent size.",
+                        "correct": true,
+                        "explanation": "Since LVs are made of extents, their total size must align with the extent size of the VG."
+                },
+                {
+                        "id": 41,
+                        "type": "true_false",
+                        "question": "The command 'vgs' provides more detailed information than 'vgdisplay'.",
+                        "correct": false,
+                        "explanation": "vgs is a summary command; vgdisplay provides full details."
+                },
+                {
+                        "id": 42,
+                        "type": "true_false",
+                        "question": "The device name /dev/vgdata/lvdata is a symbolic link to a device mapper node like /dev/dm-2.",
+                        "correct": true,
+                        "explanation": "LVM uses the device mapper interface, and the friendly names are symlinks to the actual dm nodes."
+                },
+                {
+                        "id": 43,
+                        "type": "true_false",
+                        "question": "Decreasing an Ext4 file system can be done while it is still mounted (online).",
+                        "correct": false,
+                        "explanation": "Decreasing Ext4 must be done offline (unmounted)."
+                },
+                {
+                        "id": 44,
+                        "type": "true_false",
+                        "question": "The 'lvextend' command can resize the file system automatically if the '-r' option is used.",
+                        "correct": true,
+                        "explanation": "The -r or --resizefs flag handles the file system expansion alongside the volume expansion."
+                },
+                {
+                        "id": 45,
+                        "type": "true_false",
+                        "question": "A Physical Volume can be removed from a Volume Group even if it is currently holding data for a Logical Volume.",
+                        "correct": false,
+                        "explanation": "You must first move the data off the PV using 'pvmove' before you can safely remove it with 'vgreduce'."
+                },
+                {
+                        "id": 46,
+                        "type": "true_false",
+                        "question": "Device mapper is only used by LVM and no other Linux features.",
+                        "correct": false,
+                        "explanation": "Device mapper is also used by software RAID and multipath devices."
+                },
+                {
+                        "id": 47,
+                        "type": "true_false",
+                        "question": "LVM snapshots are created by copying the administrative metadata of the logical volume.",
+                        "correct": true,
+                        "explanation": "Metadata is copied first to track the state of files at the moment the snapshot is taken."
+                },
+                {
+                        "id": 48,
+                        "type": "true_false",
+                        "question": "The 'pvdisplay' command shows the UUID of a physical volume.",
+                        "correct": true,
+                        "explanation": "pvdisplay provides detailed attributes including the unique UUID of the PV."
+                },
+                {
+                        "id": 49,
+                        "type": "true_false",
+                        "question": "All resize operations in LVM must match complete logical extents.",
+                        "correct": true,
+                        "explanation": "LVM operates on the granularity of extents, so sizes must be multiples of the extent size."
+                },
+                {
+                        "id": 50,
+                        "type": "true_false",
+                        "question": "LVM is considered a form of storage virtualization.",
+                        "correct": true,
+                        "explanation": "It abstracts physical storage into a virtual pool that can be sliced into logical volumes."
+                }
+        ]
+};
+
+        let currentQuestion = 0;
+        let answers = {};
+        let allQuestions = [];
+
+        function initializeQuiz() {
+            allQuestions = [
+                ...quizData.mcq_questions,
+                ...quizData.true_false_questions
+            ];
+            console.log('Quiz initialized with', allQuestions.length, 'questions');
+        }
+
+        function startQuiz() {
+            document.getElementById('startSection').style.display = 'none';
+            document.getElementById('quizSection').classList.add('active');
+            currentQuestion = 0;
+            answers = {};
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            const question = allQuestions[currentQuestion];
+            
+            document.getElementById('questionNumber').textContent = 
+                `Question ${currentQuestion + 1} of ${allQuestions.length}`;
+            document.getElementById('questionText').textContent = question.question;
+            document.getElementById('questionCounter').textContent = 
+                `Question ${currentQuestion + 1} of ${allQuestions.length}`;
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            if (question.type === 'mcq') {
+                question.options.forEach((option, index) => {
+                    const optionDiv = document.createElement('label');
+                    optionDiv.className = 'option';
+                    optionDiv.innerHTML = `
+                        <input type="radio" name="answer" value="${index}">
+                        <span>${option}</span>
+                    `;
+                    
+                    if (answers[currentQuestion] !== undefined) {
+                        if (answers[currentQuestion] == index) {
+                            optionDiv.classList.add('selected');
+                        }
+                        if (answers[currentQuestion] == question.correct) {
+                            if (index == question.correct) {
+                                optionDiv.classList.add('correct');
+                            }
+                        } else if (answers[currentQuestion] == index) {
+                            optionDiv.classList.add('incorrect');
+                        }
+                    }
+                    
+                    optionDiv.querySelector('input').addEventListener('change', (e) => {
+                        answers[currentQuestion] = parseInt(e.target.value);
+                        updateProgress();
+                        showExplanation();
+                    });
+                    
+                    optionsContainer.appendChild(optionDiv);
+                });
+            } else {
+                ['True', 'False'].forEach((value, index) => {
+                    const optionDiv = document.createElement('label');
+                    optionDiv.className = 'option';
+                    optionDiv.innerHTML = `
+                        <input type="radio" name="answer" value="${value === 'True'}">
+                        <span>${value}</span>
+                    `;
+                    
+                    if (answers[currentQuestion] !== undefined) {
+                        if (answers[currentQuestion] == (value === 'True')) {
+                            optionDiv.classList.add('selected');
+                        }
+                        if (answers[currentQuestion] == question.correct) {
+                            if ((value === 'True') == question.correct) {
+                                optionDiv.classList.add('correct');
+                            }
+                        } else if (answers[currentQuestion] != undefined) {
+                            if ((value === 'True') == answers[currentQuestion]) {
+                                optionDiv.classList.add('incorrect');
+                            }
+                        }
+                    }
+                    
+                    optionDiv.querySelector('input').addEventListener('change', (e) => {
+                        answers[currentQuestion] = e.target.value === 'true';
+                        updateProgress();
+                        showExplanation();
+                    });
+                    
+                    optionsContainer.appendChild(optionDiv);
+                });
+            }
+
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').disabled = currentQuestion === allQuestions.length - 1;
+
+            if (answers[currentQuestion] !== undefined) {
+                showExplanation();
+            } else {
+                document.getElementById('explanation').classList.remove('show');
+            }
+
+            updateProgress();
+        }
+
+        function showExplanation() {
+            const question = allQuestions[currentQuestion];
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (answers[currentQuestion] !== undefined) {
+                const isCorrect = question.type === 'mcq' 
+                    ? answers[currentQuestion] == question.correct
+                    : answers[currentQuestion] == question.correct;
+                
+                explanationDiv.innerHTML = `
+                    <strong>${isCorrect ? '✅ Correct!' : '❌ Incorrect'}</strong><br>
+                    ${question.explanation}
+                `;
+                explanationDiv.classList.add('show');
+            }
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(answers).length;
+            document.getElementById('answeredCounter').textContent = `Answered: ${answered}/${allQuestions.length}`;
+            const progress = (answered / allQuestions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < allQuestions.length - 1) {
+                currentQuestion++;
+                displayQuestion();
+                document.getElementById('questionContainer').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                displayQuestion();
+                document.getElementById('questionContainer').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function showQuestionList() {
+            const modal = document.getElementById('questionListModal');
+            const content = document.getElementById('questionListContent');
+            content.innerHTML = '';
+
+            allQuestions.forEach((q, index) => {
+                const item = document.createElement('div');
+                item.className = 'question-item';
+                if (answers[index] !== undefined) {
+                    item.classList.add('answered');
+                } else {
+                    item.classList.add('unanswered');
+                }
+                if (index === currentQuestion) {
+                    item.classList.add('current');
+                }
+                
+                const statusText = answers[index] !== undefined ? '✓' : '✗';
+                item.innerHTML = `Q${index + 1}: ${q.question.substring(0, 50)}... <span class="answer-status">${statusText}</span>`;
+                item.onclick = () => {
+                    currentQuestion = index;
+                    displayQuestion();
+                    modal.style.display = 'none';
+                };
+                
+                content.appendChild(item);
+            });
+
+            modal.style.display = 'flex';
+        }
+
+        function closeQuestionList() {
+            document.getElementById('questionListModal').style.display = 'none';
+        }
+
+        function finishQuiz() {
+            document.getElementById('quizSection').classList.remove('active');
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            let correct = 0;
+            let incorrect = 0;
+            let unanswered = 0;
+
+            allQuestions.forEach((q, index) => {
+                if (answers[index] === undefined) {
+                    unanswered++;
+                } else {
+                    const isCorrect = q.type === 'mcq' 
+                        ? answers[index] == q.correct
+                        : answers[index] == q.correct;
+                    if (isCorrect) {
+                        correct++;
+                    } else {
+                        incorrect++;
+                    }
+                }
+            });
+
+            document.getElementById('scoreDisplay').textContent = `${correct}/${allQuestions.length}`;
+            const percentage = Math.round((correct / allQuestions.length) * 100);
+            document.getElementById('scorePercentage').textContent = `${percentage}%`;
+            document.getElementById('correctCount').textContent = correct;
+            document.getElementById('incorrectCount').textContent = incorrect;
+            document.getElementById('unansweredCount').textContent = unanswered;
+
+            const detailedResults = document.getElementById('detailedResults');
+            detailedResults.innerHTML = '<h3 style="margin-top: 20px; color: #333;">Detailed Results:</h3>';
+            
+            const resultsList = document.createElement('div');
+            resultsList.style.maxHeight = '300px';
+            resultsList.style.overflowY = 'auto';
+            resultsList.style.marginTop = '15px';
+
+            allQuestions.forEach((q, index) => {
+                const resultItem = document.createElement('div');
+                resultItem.style.padding = '10px';
+                resultItem.style.marginBottom = '8px';
+                resultItem.style.borderRadius = '5px';
+                resultItem.style.fontSize = '14px';
+
+                if (answers[index] === undefined) {
+                    resultItem.style.background = '#fff3cd';
+                    resultItem.style.borderLeft = '3px solid #ffc107';
+                    resultItem.innerHTML = `<strong>Q${index + 1}:</strong> Not answered`;
+                } else {
+                    const isCorrect = q.type === 'mcq' 
+                        ? answers[index] == q.correct
+                        : answers[index] == q.correct;
+                    
+                    if (isCorrect) {
+                        resultItem.style.background = '#d4edda';
+                        resultItem.style.borderLeft = '3px solid #28a745';
+                        resultItem.innerHTML = `<strong>Q${index + 1}:</strong> ✓ Correct`;
+                    } else {
+                        resultItem.style.background = '#f8d7da';
+                        resultItem.style.borderLeft = '3px solid #dc3545';
+                        resultItem.innerHTML = `<strong>Q${index + 1}:</strong> ✗ Incorrect`;
+                    }
+                }
+
+                resultsList.appendChild(resultItem);
+            });
+
+            detailedResults.appendChild(resultsList);
+        }
+
+        function restartQuiz() {
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('startSection').style.display = 'block';
+            currentQuestion = 0;
+            answers = {};
+        }
+
+        // Initialize on load
+        window.addEventListener('load', initializeQuiz);
+    </script>
+</body>
+</html>
