@@ -5,225 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Linux Quiz - Home</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
         }
-
-        .container {
-            max-width: 1000px;
-            width: 100%;
-        }
-
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 50px;
-            animation: slideDown 0.6s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .header h1 {
-            font-size: 48px;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .header p {
-            font-size: 18px;
-            opacity: 0.9;
-        }
-
-        .quiz-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-
+        .container { max-width:1000px; width:100%; }
+        .header { text-align:center; color:white; margin-bottom:50px; animation: slideDown 0.6s ease-out; }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-30px);} to{opacity:1; transform:translateY(0);} }
+        .header h1 { font-size:48px; margin-bottom:10px; font-weight:700; }
+        .header p { font-size:18px; opacity:0.9; }
+        .quiz-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(350px, 1fr)); gap:30px; margin-bottom:40px; }
         .quiz-card {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-            animation: slideUp 0.6s ease-out;
-            cursor: pointer;
+            background:white; border-radius:20px; padding:40px; box-shadow:0 20px 60px rgba(0,0,0,0.3);
+            transition:all 0.3s ease; animation: slideUp 0.6s ease-out; cursor:pointer;
         }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .quiz-card:nth-child(2) {
-            animation-delay: 0.1s;
-        }
-
-        .quiz-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
-        }
-
-        .quiz-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        .quiz-card h2 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 15px;
-        }
-
-        .quiz-card p {
-            color: #666;
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .quiz-stats {
-            background: #f9f9f9;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            color: #555;
-        }
-
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .stat-item:last-child {
-            border-bottom: none;
-        }
-
-        .stat-label {
-            font-weight: 600;
-        }
-
-        .stat-value {
-            color: #667eea;
-            font-weight: bold;
-        }
-
+        @keyframes slideUp { from { opacity:0; transform:translateY(30px);} to {opacity:1; transform:translateY(0);} }
+        .quiz-card:hover { transform:translateY(-10px); box-shadow:0 30px 80px rgba(0,0,0,0.4); }
+        .quiz-icon { font-size:48px; margin-bottom:15px; }
+        .quiz-card h2 { color:#333; font-size:24px; margin-bottom:15px; }
+        .quiz-card p { color:#666; font-size:14px; line-height:1.6; margin-bottom:20px; }
+        .quiz-stats { background:#f9f9f9; border-radius:10px; padding:15px; margin-bottom:20px; font-size:13px; color:#555; }
+        .stat-item { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #e0e0e0; }
+        .stat-item:last-child { border-bottom:none; }
+        .stat-label { font-weight:600; }
+        .stat-value { color:#667eea; font-weight:bold; }
         .quiz-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            width:100%; padding:15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color:white; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer;
+            transition:all 0.3s ease;
         }
+        .quiz-btn:hover { transform:scale(1.02); box-shadow:0 10px 30px rgba(102,126,234,0.4); }
+        .quiz-btn:active { transform:scale(0.98); }
+        .footer { text-align:center; color:white; opacity:0.9; font-size:14px; margin-top:40px; }
 
-        .quiz-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-
-        .quiz-btn:active {
-            transform: scale(0.98);
-        }
-
-        .footer {
-            text-align: center;
-            color: white;
-            opacity: 0.9;
-            font-size: 14px;
-            margin-top: 40px;
-        }
-
-        .features {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 30px;
-            color: white;
-            margin-bottom: 40px;
-            animation: slideUp 0.6s ease-out 0.2s both;
-        }
-
-        .features h3 {
-            font-size: 20px;
-            margin-bottom: 20px;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .feature-item {
-            text-align: center;
-        }
-
-        .feature-icon {
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-
-        .feature-text {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        @media (max-width: 600px) {
-            .header h1 {
-                font-size: 32px;
-            }
-
-            .header p {
-                font-size: 16px;
-            }
-
-            .quiz-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .quiz-card {
-                padding: 25px;
-            }
-
-            .quiz-card h2 {
-                font-size: 20px;
-            }
+        @media (max-width:600px){
+            .header h1 { font-size:32px; }
+            .header p { font-size:16px; }
+            .quiz-grid { grid-template-columns:1fr; }
+            .quiz-card { padding:25px; }
+            .quiz-card h2 { font-size:20px; }
         }
     </style>
 </head>
@@ -234,285 +56,152 @@
             <p>Master Linux System Administration with Interactive Quizzes</p>
         </div>
 
-        <div class="features">
-            <h3>✨ Why Take These Quizzes?</h3>
-            <div class="features-grid">
-                <div class="feature-item">
-                    <div class="feature-icon">⚡</div>
-                    <div class="feature-text">Instant Feedback</div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">📊</div>
-                    <div class="feature-text">Detailed Results</div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">🎨</div>
-                    <div class="feature-text">Beautiful Design</div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">📱</div>
-                    <div class="feature-text">Mobile Friendly</div>
-                </div>
-            </div>
-        </div>
-
         <div class="quiz-grid">
+            <!-- CH01 -->
             <div class="quiz-card" onclick="window.location.href='ch01_quiz.html'">
                 <div class="quiz-icon">🚀</div>
                 <h2>CH01: Boot Process with Systemd</h2>
                 <p>Test your knowledge about systemd, units, services, targets, and boot management.</p>
                 <div class="quiz-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Questions:</span>
-                        <span class="stat-value">50</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Multiple Choice:</span>
-                        <span class="stat-value">30</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">True/False:</span>
-                        <span class="stat-value">20</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Difficulty:</span>
-                        <span class="stat-value">Intermediate</span>
-                    </div>
+                    <div class="stat-item"><span class="stat-label">Total Questions:</span><span class="stat-value">50</span></div>
+                    <div class="stat-item"><span class="stat-label">Multiple Choice:</span><span class="stat-value">30</span></div>
+                    <div class="stat-item"><span class="stat-label">True/False:</span><span class="stat-value">20</span></div>
+                    <div class="stat-item"><span class="stat-label">Difficulty:</span><span class="stat-value">Intermediate</span></div>
                 </div>
                 <button class="quiz-btn">Start Quiz →</button>
             </div>
 
+            <!-- CH02 -->
             <div class="quiz-card" onclick="window.location.href='ch02_quiz.html'">
                 <div class="quiz-icon">🔧</div>
                 <h2>CH02: Kernel Management</h2>
                 <p>Assess your understanding of kernel management, GRUB, modules, and boot processes.</p>
                 <div class="quiz-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Questions:</span>
-                        <span class="stat-value">50</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Multiple Choice:</span>
-                        <span class="stat-value">30</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">True/False:</span>
-                        <span class="stat-value">20</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Difficulty:</span>
-                        <span class="stat-value">Intermediate</span>
-                    </div>
+                    <div class="stat-item"><span class="stat-label">Total Questions:</span><span class="stat-value">50</span></div>
+                    <div class="stat-item"><span class="stat-label">Multiple Choice:</span><span class="stat-value">30</span></div>
+                    <div class="stat-item"><span class="stat-label">True/False:</span><span class="stat-value">20</span></div>
+                    <div class="stat-item"><span class="stat-label">Difficulty:</span><span class="stat-value">Intermediate</span></div>
                 </div>
                 <button class="quiz-btn">Start Quiz →</button>
             </div>
 
+            <!-- CH03 -->
             <div class="quiz-card" onclick="window.location.href='ch03_quiz.html'">
                 <div class="quiz-icon">👥</div>
                 <h2>CH03: Users and Permissions</h2>
                 <p>Master Linux user accounts, groups, file permissions, and access control.</p>
                 <div class="quiz-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Questions:</span>
-                        <span class="stat-value">50</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Multiple Choice:</span>
-                        <span class="stat-value">30</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">True/False:</span>
-                        <span class="stat-value">20</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Difficulty:</span>
-                        <span class="stat-value">Intermediate</span>
-                    </div>
+                    <div class="stat-item"><span class="stat-label">Total Questions:</span><span class="stat-value">50</span></div>
+                    <div class="stat-item"><span class="stat-label">Multiple Choice:</span><span class="stat-value">30</span></div>
+                    <div class="stat-item"><span class="stat-label">True/False:</span><span class="stat-value">20</span></div>
+                    <div class="stat-item"><span class="stat-label">Difficulty:</span><span class="stat-value">Intermediate</span></div>
                 </div>
                 <button class="quiz-btn">Start Quiz →</button>
             </div>
 
+            <!-- CH04 -->
             <div class="quiz-card" onclick="window.location.href='ch04_quiz.html'">
                 <div class="quiz-icon">🔐</div>
                 <h2>CH04: ACL and SELinux Management</h2>
                 <p>Learn access control lists, SELinux modes, contexts, and security policies.</p>
                 <div class="quiz-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Questions:</span>
-                        <span class="stat-value">50</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Multiple Choice:</span>
-                        <span class="stat-value">30</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">True/False:</span>
-                        <span class="stat-value">20</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Difficulty:</span>
-                        <span class="stat-value">Advanced</span>
-                    </div>
+                    <div class="stat-item"><span class="stat-label">Total Questions:</span><span class="stat-value">50</span></div>
+                    <div class="stat-item"><span class="stat-label">Multiple Choice:</span><span class="stat-value">30</span></div>
+                    <div class="stat-item"><span class="stat-label">True/False:</span><span class="stat-value">20</span></div>
+                    <div class="stat-item"><span class="stat-label">Difficulty:</span><span class="stat-value">Advanced</span></div>
                 </div>
                 <button class="quiz-btn">Start Quiz →</button>
             </div>
 
+            <!-- CH05 -->
             <div class="quiz-card" onclick="window.location.href='ch05_quiz.html'">
                 <div class="quiz-icon">🛡️</div>
                 <h2>CH05: Configuring Firewall</h2>
                 <p>Master firewalld zones, services, rich rules, and firewall management.</p>
                 <div class="quiz-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Questions:</span>
-                        <span class="stat-value">50</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Multiple Choice:</span>
-                        <span class="stat-value">30</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">True/False:</span>
-                        <span class="stat-value">20</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Difficulty:</span>
-                        <span class="stat-value">Advanced</span>
-                    </div>
+                    <div class="stat-item"><span class="stat-label">Total Questions:</span><span class="stat-value">50</span></div>
+                    <div class="stat-item"><span class="stat-label">Multiple Choice:</span><span class="stat-value">30</span></div>
+                    <div class="stat-item"><span class="stat-label">True/False:</span><span class="stat-value">20</span></div>
+                    <div class="stat-item"><span class="stat-label">Difficulty:</span><span class="stat-value">Advanced</span></div>
                 </div>
                 <button class="quiz-btn">Start Quiz →</button>
             </div>
 
+            <!-- CH06 -->
             <div class="quiz-card" onclick="window.location.href='ch06_quiz.html'">
                 <div class="quiz-icon">🌐</div>
                 <h2>CH06: Configuring Networking</h2>
                 <p>Learn network configuration, DNS, routing, NTP, and network management.</p>
                 <div class="quiz-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Questions:</span>
-                        <span class="stat-value">50</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Multiple Choice:</span>
-                        <span class="stat-value">30</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">True/False:</span>
-                        <span class="stat-value">20</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Difficulty:</span>
-                        <span class="stat-value">Intermediate</span>
-                    </div>
+                    <div class="stat-item"><span class="stat-label">Total Questions:</span><span class="stat-value">50</span></div>
+                    <div class="stat-item"><span class="stat-label">Multiple Choice:</span><span class="stat-value">30</span></div>
+                    <div class="stat-item"><span class="stat-label">True/False:</span><span class="stat-value">20</span></div>
+                    <div class="stat-item"><span class="stat-label">Difficulty:</span><span class="stat-value">Intermediate</span></div>
                 </div>
                 <button class="quiz-btn">Start Quiz →</button>
             </div>
 
+            <!-- CH07 -->
             <div class="quiz-card" onclick="window.location.href='ch07_quiz.html'">
                 <div class="quiz-icon">📁</div>
                 <h2>CH07: Network File Sharing Services</h2>
                 <p>Master NFS, Samba, FTP, SCP, and Rsync file sharing technologies.</p>
                 <div class="quiz-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Questions:</span>
-                        <span class="stat-value">50</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Multiple Choice:</span>
-                        <span class="stat-value">30</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">True/False:</span>
-                        <span class="stat-value">20</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Difficulty:</span>
-                        <span class="stat-value">Advanced</span>
-                    </div>
+                    <div class="stat-item"><span class="stat-label">Total Questions:</span><span class="stat-value">50</span></div>
+                    <div class="stat-item"><span class="stat-label">Multiple Choice:</span><span class="stat-value">30</span></div>
+                    <div class="stat-item"><span class="stat-label">True/False:</span><span class="stat-value">20</span></div>
+                    <div class="stat-item"><span class="stat-label">Difficulty:</span><span class="stat-value">Advanced</span></div>
                 </div>
                 <button class="quiz-btn">Start Quiz →</button>
             </div>
 
+            <!-- CH08 -->
             <div class="quiz-card" onclick="window.location.href='ch08_quiz.html'">
                 <div class="quiz-icon">🔐</div>
                 <h2>CH08: Remote Access</h2>
                 <p>Master SSH, key-based authentication, and secure remote access techniques.</p>
                 <div class="quiz-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Questions:</span>
-                        <span class="stat-value">50</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Multiple Choice:</span>
-                        <span class="stat-value">30</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">True/False:</span>
-                        <span class="stat-value">20</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Difficulty:</span>
-                        <span class="stat-value">Advanced</span>
-                    </div>
+                    <div class="stat-item"><span class="stat-label">Total Questions:</span><span class="stat-value">50</span></div>
+                    <div class="stat-item"><span class="stat-label">Multiple Choice:</span><span class="stat-value">30</span></div>
+                    <div class="stat-item"><span class="stat-label">True/False:</span><span class="stat-value">20</span></div>
+                    <div class="stat-item"><span class="stat-label">Difficulty:</span><span class="stat-value">Advanced</span></div>
                 </div>
                 <button class="quiz-btn">Start Quiz →</button>
             </div>
 
+            <!-- CH09 -->
             <div class="quiz-card" onclick="window.location.href='ch09_quiz.html'">
                 <div class="quiz-icon">🖥️</div>
                 <h2>CH09: Configuring a Basic Apache Server</h2>
                 <p>Master Apache web server configuration, virtual hosts, and TLS/SSL setup.</p>
                 <div class="quiz-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Questions:</span>
-                        <span class="stat-value">50</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Multiple Choice:</span>
-                        <span class="stat-value">30</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">True/False:</span>
-                        <span class="stat-value">20</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Difficulty:</span>
-                        <span class="stat-value">Advanced</span>
-                    </div>
+                    <div class="stat-item"><span class="stat-label">Total Questions:</span><span class="stat-value">50</span></div>
+                    <div class="stat-item"><span class="stat-label">Multiple Choice:</span><span class="stat-value">30</span></div>
+                    <div class="stat-item"><span class="stat-label">True/False:</span><span class="stat-value">20</span></div>
+                    <div class="stat-item"><span class="stat-label">Difficulty:</span><span class="stat-value">Advanced</span></div>
                 </div>
+                <button class="quiz-btn">Start Quiz →</button>
             </div>
-                <!-- CH10 Card -->
+
+            <!-- CH10 -->
             <div class="quiz-card" onclick="window.location.href='ch10_quiz.html'">
                 <div class="quiz-icon">💾</div>
                 <h2>CH10: Managing LVM Logical Volumes</h2>
                 <p>Master LVM architecture, creating PVs, VGs, LVs, and resizing storage infrastructure.</p>
                 <div class="quiz-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Questions:</span>
-                        <span class="stat-value">50</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Multiple Choice:</span>
-                        <span class="stat-value">30</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">True/False:</span>
-                        <span class="stat-value">20</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Difficulty:</span>
-                        <span class="stat-value">Advanced</span>
-                    </div>
+                    <div class="stat-item"><span class="stat-label">Total Questions:</span><span class="stat-value">50</span></div>
+                    <div class="stat-item"><span class="stat-label">Multiple Choice:</span><span class="stat-value">30</span></div>
+                    <div class="stat-item"><span class="stat-label">True/False:</span><span class="stat-value">20</span></div>
+                    <div class="stat-item"><span class="stat-label">Difficulty:</span><span class="stat-value">Advanced</span></div>
                 </div>
                 <button class="quiz-btn">Start Quiz →</button>
             </div>
 
-                <button class="quiz-btn">Start Quiz →</button>
-            </div>
         </div>
 
         <div class="footer">
             <p>🎓 Created for Linux System Administration Learning</p>
-            <p style="margin-top: 10px; font-size: 12px;">© 2026 Linux Quiz | All Rights Reserved</p>
+            <p style="margin-top:10px; font-size:12px;">© 2026 Linux Quiz | All Rights Reserved</p>
         </div>
     </div>
 </body>
